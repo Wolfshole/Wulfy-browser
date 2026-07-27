@@ -7,6 +7,11 @@ export interface SearchEngine {
   icon?: string;
 }
 
+export interface SavedTab {
+  url: string;
+  title: string;
+}
+
 class SettingsManager {
   private store: Store;
   private defaultSearchEngines: SearchEngine[] = [
@@ -50,6 +55,8 @@ class SettingsManager {
         homepage: 'https://www.google.com',
         theme: 'light',
         searchEngines: this.defaultSearchEngines,
+        restoreTabs: false,
+        savedTabs: [],
       },
     });
   }
@@ -136,6 +143,22 @@ class SettingsManager {
    */
   setTheme(theme: string): void {
     this.store.set('theme', theme);
+  }
+
+  getRestoreTabs(): boolean {
+    return this.store.get('restoreTabs', false) as boolean;
+  }
+
+  setRestoreTabs(enabled: boolean): void {
+    this.store.set('restoreTabs', enabled);
+  }
+
+  getSavedTabs(): SavedTab[] {
+    return this.store.get('savedTabs', []) as SavedTab[];
+  }
+
+  setSavedTabs(tabs: SavedTab[]): void {
+    this.store.set('savedTabs', tabs);
   }
 
   /**

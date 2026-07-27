@@ -418,6 +418,21 @@ webview {
   margin-bottom: 12px;
 }
 
+.settings-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.settings-checkbox input {
+  width: 16px;
+  height: 16px;
+  accent-color: #0078d4;
+}
+
 .search-select {
   width: 100%;
   padding: 10px 12px;
@@ -509,6 +524,22 @@ webview {
   flex-wrap: wrap;
   justify-content: flex-end;
   gap: 5px;
+}
+
+.download-url-form {
+  display: flex;
+  gap: 6px;
+  padding: 8px 16px 0;
+}
+
+#download-url-input {
+  min-width: 0;
+  flex: 1;
+  padding: 7px 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
 }
 
 .download-action,

@@ -98,6 +98,12 @@
         <button id="close-downloads-btn" class="close-btn">✕</button>
       </div>
       <div class="panel-controls">
+        <div class="download-url-form">
+          <input id="download-url-input" type="url" placeholder="Download-Link einfügen" aria-label="Download-Link">
+          <button id="download-url-btn" class="small-btn">Herunterladen</button>
+        </div>
+        <button id="open-downloads-folder-btn" class="small-btn">Ordner öffnen</button>
+        <button id="choose-downloads-folder-btn" class="small-btn">Ordner wählen</button>
         <button id="clear-downloads-btn" class="small-btn">Alle löschen</button>
       </div>
       <div id="downloads-list" class="panel-content">
@@ -125,6 +131,14 @@
           <select id="search-engine-select" class="search-select">
             <!-- Suchmaschinen werden hier eingefügt -->
           </select>
+        </div>
+
+        <div class="settings-section">
+          <h4>Tabs</h4>
+          <label class="settings-checkbox">
+            <input id="restore-tabs-checkbox" type="checkbox">
+            Beim Start zuletzt geöffnete Tabs wiederherstellen
+          </label>
         </div>
 
         <div class="settings-section">

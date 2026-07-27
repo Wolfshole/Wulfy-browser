@@ -19,6 +19,7 @@ class BrowserApp {
   private activeTabId: string = '';
   private tabCounter: number = 0;
   private selectedSearchEngine: SearchEngine | null = null;
+  private restoreTabsEnabled: boolean = false;
 
   constructor() {
     // Initialisierung wird vom DOMContentLoaded Event gestartet
@@ -34,7 +35,8 @@ class BrowserApp {
       console.log('✅ Event Listener registriert');
       await this.setupSearchEngineSelector();
       console.log('✅ Suchmaschinen geladen');
-      this.createNewTab('https://www.google.com', 'Google');
+      const restoredTabs = await this.restoreSavedTabs();
+      if (!restoredTabs) this.createNewTab('https://www.google.com', 'Google');
       this.loadBookmarks();
       console.log('✅ Browser bereit!');
     } catch (error) {
@@ -63,6 +65,15 @@ class BrowserApp {
     document.getElementById('close-settings-btn')?.addEventListener('click', () => this.closeSettingsPanel());
     
     document.getElementById('clear-downloads-btn')?.addEventListener('click', () => this.clearDownloads());
+    document.getElementById('open-downloads-folder-btn')?.addEventListener('click', () => electron.downloads.openFolder());
+    document.getElementById('choose-downloads-folder-btn')?.addEventListener('click', async () => {
+      await electron.downloads.setPath();
+      this.loadDownloads();
+    });
+    document.getElementById('download-url-btn')?.addEventListener('click', () => this.downloadFromUrl());
+    document.getElementById('download-url-input')?.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') this.downloadFromUrl();
+    });
     electron.downloads.onChanged(() => {
       if (document.getElementById('downloads-panel')?.classList.contains('active')) {
         this.loadDownloads();
@@ -72,6 +83,12 @@ class BrowserApp {
     // Theme Toggle Buttons
     document.getElementById('theme-light-btn')?.addEventListener('click', () => this.setTheme('light'));
     document.getElementById('theme-dark-btn')?.addEventListener('click', () => this.setTheme('dark'));
+    const restoreTabsCheckbox = document.getElementById('restore-tabs-checkbox') as HTMLInputElement | null;
+    restoreTabsCheckbox?.addEventListener('change', async () => {
+      this.restoreTabsEnabled = restoreTabsCheckbox.checked;
+      await electron.settings.setRestoreTabs(this.restoreTabsEnabled);
+      if (this.restoreTabsEnabled) this.saveCurrentTabs();
+    });
     
     // AI Settings Button
     document.getElementById('ai-settings-btn')?.addEventListener('click', () => this.openAISettings());
@@ -138,6 +155,10 @@ class BrowserApp {
     window.addEventListener('new-tab', () => {
       this.createNewTab();
     });
+
+    window.addEventListener('open-url-in-new-tab', ((event: CustomEvent<string>) => {
+      this.createNewTab(event.detail, 'Download');
+    }) as EventListener);
   }
 
   private createNewTab(url: string = 'https://www.google.com', title: string = 'Neues Tab'): void {
@@ -155,6 +176,7 @@ class BrowserApp {
     this.renderTab(tab);
     this.createWebView(webviewId, url);
     this.switchToTab(tabId);
+    this.saveCurrentTabs();
   }
 
   private renderTab(tab: Tab): void {
@@ -184,6 +206,7 @@ class BrowserApp {
 
     const webview = document.createElement('webview');
     webview.id = webviewId;
+    webview.setAttribute('allowpopups', 'true');
     webview.src = this.ensureProtocol(url);
     webview.className = 'webview';
     webview.style.display = 'none';
@@ -205,6 +228,7 @@ class BrowserApp {
           this.updateAddressBar(tab.url);
           this.updateNavigationButtonStates();
         }
+        this.saveCurrentTabs();
       }
     });
 
@@ -273,6 +297,7 @@ class BrowserApp {
         this.createNewTab();
       }
     }
+    this.saveCurrentTabs();
   }
 
   private switchToNextTab(): void {
@@ -565,7 +590,9 @@ class BrowserApp {
           ? `<button class="download-action" data-action="pause">Pausieren</button><button class="download-action" data-action="cancel">Abbrechen</button>`
           : download.status === 'paused'
             ? `<button class="download-action" data-action="resume">Fortsetzen</button><button class="download-action" data-action="cancel">Abbrechen</button>`
-            : '';
+            : download.status === 'completed'
+              ? `<button class="download-action" data-action="open">Öffnen</button><button class="download-action" data-action="folder">Ordner</button>`
+              : '';
         downloadElement.innerHTML = `
           <div class="download-content">
             <p class="download-name">${this.escapeHtml(download.fileName)}</p>
@@ -589,6 +616,14 @@ class BrowserApp {
           await electron.downloads.cancel(download.id);
           this.loadDownloads();
         });
+        downloadElement.querySelector('[data-action="open"]')?.addEventListener('click', async () => {
+          const opened = await electron.downloads.open(download.id);
+          if (!opened) alert('Die Datei wurde nicht gefunden.');
+        });
+        downloadElement.querySelector('[data-action="folder"]')?.addEventListener('click', async () => {
+          const opened = await electron.downloads.showInFolder(download.id);
+          if (!opened) alert('Die Datei wurde nicht gefunden.');
+        });
 
         downloadElement.querySelector('.delete-btn')?.addEventListener('click', async () => {
           await electron.downloads.delete(download.id);
@@ -607,6 +642,18 @@ class BrowserApp {
       await electron.downloads.clear();
       this.loadDownloads();
     }
+  }
+
+  private async downloadFromUrl(): Promise<void> {
+    const input = document.getElementById('download-url-input') as HTMLInputElement | null;
+    if (!input || !/^https?:\/\//i.test(input.value.trim())) {
+      alert('Bitte füge einen vollständigen http(s)-Download-Link ein.');
+      return;
+    }
+
+    await electron.downloads.add(input.value.trim());
+    input.value = '';
+    this.loadDownloads();
   }
 
   private formatBytes(bytes: number): string {
@@ -717,6 +764,28 @@ class BrowserApp {
       "'": '&#039;',
     };
     return text.replace(/[&<>"']/g, (m) => map[m]);
+  }
+
+  private async restoreSavedTabs(): Promise<boolean> {
+    this.restoreTabsEnabled = Boolean(await electron.settings.getRestoreTabs());
+    const checkbox = document.getElementById('restore-tabs-checkbox') as HTMLInputElement | null;
+    if (checkbox) checkbox.checked = this.restoreTabsEnabled;
+    if (!this.restoreTabsEnabled) return false;
+
+    const savedTabs = await electron.settings.getSavedTabs();
+    if (!Array.isArray(savedTabs) || savedTabs.length === 0) return false;
+
+    savedTabs
+      .filter((tab: any) => typeof tab?.url === 'string' && /^https?:\/\//i.test(tab.url))
+      .forEach((tab: any) => this.createNewTab(tab.url, typeof tab.title === 'string' ? tab.title : 'Neuer Tab'));
+
+    return this.tabs.size > 0;
+  }
+
+  private saveCurrentTabs(): void {
+    if (!this.restoreTabsEnabled) return;
+    const tabs = Array.from(this.tabs.values()).map(({ url, title }) => ({ url, title }));
+    electron.settings.setSavedTabs(tabs);
   }
 
   // ============================================

@@ -52,11 +52,17 @@ export function registerDownloadHandler(win: BrowserWindow) {
 
     let lastBytes = 0;
     let lastTime = Date.now();
+    let hasFinished = false;
 
     item.on('updated', (_e, state) => {
+      // Manche Plattformen liefern noch ein letztes Fortschrittsereignis nach
+      // `done`. Dieses darf den finalen Status nicht wieder überschreiben.
+      if (hasFinished) return;
+
       const received = item.getReceivedBytes();
       const total = item.getTotalBytes();
       const progress = total > 0 ? Math.floor((received / total) * 100) : 0;
+      const isComplete = total > 0 && received >= total;
 
       const now = Date.now();
       const elapsedSec = (now - lastTime) / 1000;
@@ -66,11 +72,11 @@ export function registerDownloadHandler(win: BrowserWindow) {
       lastTime = now;
 
       downloadsManager.updateDownload(download.id, {
-        status: item.isPaused() ? 'paused' : 'progressing',
-        progress,
+        status: isComplete ? 'completed' : (item.isPaused() ? 'paused' : 'progressing'),
+        progress: isComplete ? 100 : progress,
         receivedBytes: received,
         totalBytes: total,
-        speedBytesPerSec: speed,
+        speedBytesPerSec: isComplete ? 0 : speed,
         canResume: item.canResume(),
       });
 
@@ -86,13 +92,15 @@ export function registerDownloadHandler(win: BrowserWindow) {
     });
 
     item.once('done', (_e, state) => {
+      hasFinished = true;
       activeItems.delete(download.id);
 
       if (state === 'completed') {
         downloadsManager.updateDownload(download.id, {
           status: 'completed',
           progress: 100,
-          receivedBytes: item.getTotalBytes(),
+          receivedBytes: item.getReceivedBytes(),
+          totalBytes: item.getTotalBytes(),
           speedBytesPerSec: 0,
         });
         win.webContents.send('download-complete', {

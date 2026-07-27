@@ -39,6 +39,9 @@ contextBridge.exposeInMainWorld('electron', {
     pause: (downloadId: string) => ipcRenderer.invoke('downloads:pause', downloadId),
     resume: (downloadId: string) => ipcRenderer.invoke('downloads:resume', downloadId),
     cancel: (downloadId: string) => ipcRenderer.invoke('downloads:cancel', downloadId),
+    open: (downloadId: string) => ipcRenderer.invoke('downloads:open', downloadId),
+    showInFolder: (downloadId: string) => ipcRenderer.invoke('downloads:showInFolder', downloadId),
+    openFolder: () => ipcRenderer.invoke('downloads:openFolder'),
     delete: (downloadId: string) => ipcRenderer.invoke('downloads:delete', downloadId),
     clear: () => ipcRenderer.invoke('downloads:clear'),
     getPath: () => ipcRenderer.invoke('downloads:getPath'),
@@ -69,6 +72,10 @@ contextBridge.exposeInMainWorld('electron', {
     setHomepage: (url: string) => ipcRenderer.invoke('settings:setHomepage', url),
     getTheme: () => ipcRenderer.invoke('settings:getTheme'),
     setTheme: (theme: string) => ipcRenderer.invoke('settings:setTheme', theme),
+    getRestoreTabs: () => ipcRenderer.invoke('settings:getRestoreTabs'),
+    setRestoreTabs: (enabled: boolean) => ipcRenderer.invoke('settings:setRestoreTabs', enabled),
+    getSavedTabs: () => ipcRenderer.invoke('settings:getSavedTabs'),
+    setSavedTabs: (tabs: any[]) => ipcRenderer.invoke('settings:setSavedTabs', tabs),
     getAIConfig: () => ipcRenderer.invoke('settings:getAIConfig'),
     setAIConfig: (config: any) => ipcRenderer.invoke('settings:setAIConfig', config),
   },
@@ -85,4 +92,8 @@ contextBridge.exposeInMainWorld('electron', {
 // IPC Listener
 ipcRenderer.on('new-tab', () => {
   window.dispatchEvent(new CustomEvent('new-tab'));
+});
+
+ipcRenderer.on('open-url-in-new-tab', (_event, url: string) => {
+  window.dispatchEvent(new CustomEvent('open-url-in-new-tab', { detail: url }));
 });
