@@ -63,6 +63,11 @@ class BrowserApp {
     document.getElementById('close-settings-btn')?.addEventListener('click', () => this.closeSettingsPanel());
     
     document.getElementById('clear-downloads-btn')?.addEventListener('click', () => this.clearDownloads());
+    electron.downloads.onChanged(() => {
+      if (document.getElementById('downloads-panel')?.classList.contains('active')) {
+        this.loadDownloads();
+      }
+    });
     
     // Theme Toggle Buttons
     document.getElementById('theme-light-btn')?.addEventListener('click', () => this.setTheme('light'));
@@ -215,13 +220,6 @@ class BrowserApp {
       if (this.activeTabId === Array.from(this.tabs.values()).find(t => t.webviewId === webviewId)?.id) {
         this.updateNavigationButtonStates();
       }
-    });
-
-    (webview as any).addEventListener('will-download', (event: any) => {
-      const fileName = event.item.getFilename();
-      const url = event.item.getURL();
-      electron.downloads.add(fileName, url);
-      this.loadDownloads();
     });
 
     container.appendChild(webview);
@@ -559,14 +557,38 @@ class BrowserApp {
         const date = new Date(download.downloadedAt);
         const downloadElement = document.createElement('div');
         downloadElement.className = 'download-item';
+        const progress = Number.isFinite(download.progress) ? Math.round(download.progress) : 0;
+        const received = this.formatBytes(download.receivedBytes || 0);
+        const total = download.totalBytes ? this.formatBytes(download.totalBytes) : 'unbekannte Größe';
+        const speed = download.speedBytesPerSec ? `${this.formatBytes(download.speedBytesPerSec)}/s` : '';
+        const controls = download.status === 'progressing'
+          ? `<button class="download-action" data-action="pause">Pausieren</button><button class="download-action" data-action="cancel">Abbrechen</button>`
+          : download.status === 'paused'
+            ? `<button class="download-action" data-action="resume">Fortsetzen</button><button class="download-action" data-action="cancel">Abbrechen</button>`
+            : '';
         downloadElement.innerHTML = `
           <div class="download-content">
             <p class="download-name">${this.escapeHtml(download.fileName)}</p>
             <p class="download-path">${this.escapeHtml(download.filePath)}</p>
+            <p class="download-meta">${this.escapeHtml(download.status)} · ${received} / ${total} ${speed}</p>
+            <div class="download-progress" aria-label="${progress}% heruntergeladen"><span style="width: ${progress}%"></span></div>
             <p class="download-date">${date.toLocaleString()}</p>
           </div>
-          <button class="delete-btn" data-id="${download.id}">🗑️</button>
+          <div class="download-actions">${controls}<button class="delete-btn" data-id="${download.id}" title="Aus Liste entfernen">🗑️</button></div>
         `;
+
+        downloadElement.querySelector('[data-action="pause"]')?.addEventListener('click', async () => {
+          await electron.downloads.pause(download.id);
+          this.loadDownloads();
+        });
+        downloadElement.querySelector('[data-action="resume"]')?.addEventListener('click', async () => {
+          await electron.downloads.resume(download.id);
+          this.loadDownloads();
+        });
+        downloadElement.querySelector('[data-action="cancel"]')?.addEventListener('click', async () => {
+          await electron.downloads.cancel(download.id);
+          this.loadDownloads();
+        });
 
         downloadElement.querySelector('.delete-btn')?.addEventListener('click', async () => {
           await electron.downloads.delete(download.id);
@@ -585,6 +607,13 @@ class BrowserApp {
       await electron.downloads.clear();
       this.loadDownloads();
     }
+  }
+
+  private formatBytes(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
+    const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    return `${(bytes / 1024 ** index).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
   }
 
   private toggleDownloadsPanel(): void {

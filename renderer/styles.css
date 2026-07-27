@@ -460,6 +460,68 @@ webview {
   background: var(--button-hover);
 }
 
+.download-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.download-content {
+  min-width: 0;
+  flex: 1;
+}
+
+.download-name,
+.download-path,
+.download-meta,
+.download-date {
+  margin: 0 0 4px;
+}
+
+.download-path,
+.download-meta,
+.download-date {
+  color: var(--text-secondary);
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.download-progress {
+  height: 5px;
+  margin: 7px 0;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--border-color);
+}
+
+.download-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #0078d4;
+  transition: width .2s ease;
+}
+
+.download-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 5px;
+}
+
+.download-action,
+.delete-btn {
+  padding: 5px 8px;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  background: var(--bg-tertiary);
+  cursor: pointer;
+  font-size: 11px;
+}
+
 .history-search {
   padding: 12px 16px;
   width: 100%;

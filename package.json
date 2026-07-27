@@ -10,15 +10,18 @@
   "main": "dist/main.js",
   "type": "commonjs",
   "scripts": {
-    "dev": "concurrently \"npm run watch-ts\" \"npm run electron-dev\"",
+    "dev": "concurrently -k -n MAIN,RENDERER,ELECTRON -c blue,green,magenta \"npm:watch-ts\" \"npm:dev-renderer\" \"npm:electron-dev\"",
     "watch-ts": "tsc --watch --outDir dist",
+    "dev-renderer": "vite",
+    "electron-dev": "wait-on tcp:5173 dist/main.js && electron .",
+    "copy-assets": "node -e \"const fs=require('fs'); fs.copyFileSync('src/app-icon.png','dist/app-icon.png'); fs.copyFileSync('src/title-icon.png','dist/title-icon.png'); fs.cpSync('renderer','dist/renderer',{recursive:true}); fs.copyFileSync('dist/renderer.js','dist/renderer/renderer.js');\"",
     "build-ts": "tsc --outDir dist && npm run copy-assets",
-    "copy-assets": "cp src/index.html dist/ && cp src/styles.css dist/ && cp src/app-icon.png dist/ && cp src/title-icon.png dist/",
-    "electron-dev": "npm run copy-assets && electron .",
-    "start": "npm run build-ts && npm run electron-dev",
-    "build": "npm run build-ts && electron-builder --publish never",
+    "build-renderer": "node -e \"console.log('Renderer-Dateien wurden nach dist/renderer kopiert.')\"",
+    "build-all": "npm run build-ts && npm run build-renderer",
+    "start": "npm run build-all && electron .",
+    "build": "npm run build-all && electron-builder --publish never",
     "pack": "electron-builder --dir",
-    "dist": "npm run build-ts && electron-builder --publish never",
+    "dist": "npm run build-all && electron-builder --publish never",
     "prepare": "npm run build-ts"
   },
   "build": {
@@ -56,14 +59,20 @@
   },
   "dependencies": {
     "electron-is-dev": "^2.0.0",
-    "electron-store": "^8.1.0"
+    "electron-store": "^8.1.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/node": "^25.9.1",
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.0.0",
     "electron": "^42.2.0",
     "electron-builder": "^25.1.0",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "vite": "^5.4.11",
+    "wait-on": "^8.0.1"
   }
 }
-

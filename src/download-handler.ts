@@ -27,6 +27,7 @@ export function registerDownloadHandler(win: BrowserWindow) {
   session.defaultSession.on('will-download', (_event, item, _webContents) => {
     const fileName = item.getFilename();
     const downloadDir = downloadsManager.getDownloadPath();
+    fs.mkdirSync(downloadDir, { recursive: true });
     const savePath = getUniqueFilePath(downloadDir, fileName);
     item.setSavePath(savePath);
 

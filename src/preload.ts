@@ -34,9 +34,11 @@ contextBridge.exposeInMainWorld('electron', {
   
   // Downloads
   downloads: {
-    add: (fileName: string, url: string, fileSize?: number, mimeType?: string) => 
-      ipcRenderer.invoke('downloads:add', fileName, url, fileSize, mimeType),
+    add: (url: string) => ipcRenderer.invoke('downloads:add', url),
     get: () => ipcRenderer.invoke('downloads:get'),
+    pause: (downloadId: string) => ipcRenderer.invoke('downloads:pause', downloadId),
+    resume: (downloadId: string) => ipcRenderer.invoke('downloads:resume', downloadId),
+    cancel: (downloadId: string) => ipcRenderer.invoke('downloads:cancel', downloadId),
     delete: (downloadId: string) => ipcRenderer.invoke('downloads:delete', downloadId),
     clear: () => ipcRenderer.invoke('downloads:clear'),
     getPath: () => ipcRenderer.invoke('downloads:getPath'),
@@ -45,6 +47,13 @@ contextBridge.exposeInMainWorld('electron', {
     getByMimeType: (mimeType: string) => ipcRenderer.invoke('downloads:getByMimeType', mimeType),
     export: () => ipcRenderer.invoke('downloads:export'),
     import: (downloads: any) => ipcRenderer.invoke('downloads:import', downloads),
+    onChanged: (callback: () => void) => {
+      const refresh = () => callback();
+      ipcRenderer.on('download-started', refresh);
+      ipcRenderer.on('download-progress', refresh);
+      ipcRenderer.on('download-complete', refresh);
+      ipcRenderer.on('download-failed', refresh);
+    },
   },
   
   // Settings
