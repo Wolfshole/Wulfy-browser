@@ -24,7 +24,7 @@ function getUniqueFilePath(dir: string, fileName: string): string {
 }
 
 export function registerDownloadHandler(win: BrowserWindow) {
-  session.defaultSession.on('will-download', (_event, item, _webContents) => {
+  session.defaultSession.on('will-download', (_event, item, webContents) => {
     const fileName = item.getFilename();
     const downloadDir = downloadsManager.getDownloadPath();
     fs.mkdirSync(downloadDir, { recursive: true });
@@ -48,6 +48,7 @@ export function registerDownloadHandler(win: BrowserWindow) {
       id: download.id,
       fileName: path.basename(savePath),
       filePath: savePath,
+      sourceWebContentsId: webContents.id,
     });
 
     let lastBytes = 0;

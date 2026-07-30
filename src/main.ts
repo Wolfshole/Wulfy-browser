@@ -1,7 +1,5 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from "electron";
-import fs from "fs";
+import { app, BrowserWindow, ipcMain, dialog } from "electron";
 import path from "path";
-import isDev from "electron-is-dev";
 import bookmarksManager from "./bookmarks-manager";
 import historyManager from "./history-manager";
 import downloadsManager from "./downloads-manager";
@@ -11,41 +9,9 @@ import aiManager from "./ai-manager";
 
 let mainWindow: BrowserWindow;
 
-app.on("web-contents-created", (_event, contents) => {
-  // Seiten starten Downloads teils über window.open(). Statt eines separaten
-  // Fensters öffnen wir die Zieladresse in einem normalen Browser-Tab.
-  contents.setWindowOpenHandler(({ url }) => {
-    if (/^https?:\/\//i.test(url)) {
-      mainWindow?.webContents.send("open-url-in-new-tab", url);
-    }
-    return { action: "deny" };
-  });
-
-  contents.on("context-menu", (_event, params) => {
-    const template: Electron.MenuItemConstructorOptions[] = [];
-
-    if (params.mediaType === "image" && params.srcURL) {
-      template.push({
-        label: "Bild herunterladen",
-        click: () => contents.downloadURL(params.srcURL),
-      });
-    }
-
-    if (params.linkURL && /^https?:\/\//i.test(params.linkURL)) {
-      template.push({
-        label: "Link herunterladen",
-        click: () => contents.downloadURL(params.linkURL),
-      });
-    }
-
-    if (template.length > 0) {
-      Menu.buildFromTemplate(template).popup({ window: mainWindow });
-    }
-  });
-});
+const isDev = !app.isPackaged;
 
 const createWindow = () => {
-  Menu.setApplicationMenu(null);
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -58,12 +24,12 @@ const createWindow = () => {
       webviewTag: true,
     },
   });
-  mainWindow.setMenuBarVisibility(false);
 
   const startUrl = isDev
     ? "http://localhost:5173"
     : `file://${path.join(__dirname, "renderer", "index.html")}`;
 
+  console.log(`[main] isDev=${isDev} -> loading ${startUrl}`);
   mainWindow.loadURL(startUrl);
 
   registerDownloadHandler(mainWindow);
@@ -200,27 +166,6 @@ ipcMain.handle("downloads:delete", async (_evt, downloadId: string) => {
   return downloadsManager.deleteDownload(downloadId);
 });
 
-ipcMain.handle("downloads:open", async (_evt, downloadId: string) => {
-  const download = downloadsManager.getDownload(downloadId);
-  if (!download || download.status !== "completed" || !fs.existsSync(download.filePath)) {
-    return false;
-  }
-  return (await shell.openPath(download.filePath)) === "";
-});
-
-ipcMain.handle("downloads:showInFolder", async (_evt, downloadId: string) => {
-  const download = downloadsManager.getDownload(downloadId);
-  if (!download || !fs.existsSync(download.filePath)) return false;
-  shell.showItemInFolder(download.filePath);
-  return true;
-});
-
-ipcMain.handle("downloads:openFolder", async () => {
-  const downloadPath = downloadsManager.getDownloadPath();
-  fs.mkdirSync(downloadPath, { recursive: true });
-  return (await shell.openPath(downloadPath)) === "";
-});
-
 ipcMain.handle("downloads:clear", async () => {
   downloadsManager.clearDownloads();
   return true;
@@ -312,6 +257,15 @@ ipcMain.handle("settings:setTheme", async (_evt, theme: string) => {
   return true;
 });
 
+ipcMain.handle("settings:getAIConfig", async () => {
+  return settingsManager.getAIConfig();
+});
+
+ipcMain.handle("settings:setAIConfig", async (_evt, config: any) => {
+  settingsManager.setAIConfig(config);
+  return true;
+});
+
 ipcMain.handle("settings:getRestoreTabs", async () => {
   return settingsManager.getRestoreTabs();
 });
@@ -325,21 +279,8 @@ ipcMain.handle("settings:getSavedTabs", async () => {
   return settingsManager.getSavedTabs();
 });
 
-ipcMain.handle("settings:setSavedTabs", async (_evt, tabs: unknown) => {
-  if (!Array.isArray(tabs)) return false;
-  const validTabs = tabs.filter((tab): tab is { url: string; title: string } =>
-    typeof tab?.url === "string" && typeof tab?.title === "string"
-  );
-  settingsManager.setSavedTabs(validTabs);
-  return true;
-});
-
-ipcMain.handle("settings:getAIConfig", async () => {
-  return settingsManager.getAIConfig();
-});
-
-ipcMain.handle("settings:setAIConfig", async (_evt, config: any) => {
-  settingsManager.setAIConfig(config);
+ipcMain.handle("settings:setSavedTabs", async (_evt, tabs: any) => {
+  settingsManager.setSavedTabs(tabs);
   return true;
 });
 
