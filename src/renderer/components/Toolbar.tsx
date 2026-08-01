@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { forwardRef, useEffect, useState } from "react";
+import type { ReactNode } from "react";
 
 interface Props {
   currentUrl: string;
@@ -16,27 +17,33 @@ interface Props {
   onToggleHistory: () => void;
   onToggleDownloads: () => void;
   onToggleSettings: () => void;
+  downloadsDropdown?: ReactNode;
 }
 
-export default function Toolbar({
-  currentUrl,
-  canGoBack,
-  canGoForward,
-  onBack,
-  onForward,
-  onRefresh,
-  onStop,
-  onHome,
-  onNavigate,
-  onNewTab,
-  onBookmark,
-  onToggleBookmarks,
-  onToggleHistory,
-  onToggleDownloads,
-  onToggleSettings,
-}: Props) {
+const Toolbar = forwardRef<HTMLDivElement, Props>(function Toolbar(
+  {
+    currentUrl,
+    canGoBack,
+    canGoForward,
+    onBack,
+    onForward,
+    onRefresh,
+    onStop,
+    onHome,
+    onNavigate,
+    onNewTab,
+    onBookmark,
+    onToggleBookmarks,
+    onToggleHistory,
+    onToggleDownloads,
+    onToggleSettings,
+    downloadsDropdown,
+  },
+  downloadsWrapperRef,
+) {
   const [addressValue, setAddressValue] = useState(currentUrl);
 
+  // Adressleiste mit der aktiven Tab-URL synchron halten, außer der Nutzer tippt gerade
   useEffect(() => {
     setAddressValue(currentUrl);
   }, [currentUrl]);
@@ -131,13 +138,16 @@ export default function Toolbar({
         >
           ⌚
         </button>
-        <button
-          className="nav-btn nav-btn-icon"
-          title="Downloads (Strg+J)"
-          onClick={onToggleDownloads}
-        >
-          ↓
-        </button>
+        <div className="downloads-btn-wrapper" ref={downloadsWrapperRef}>
+          <button
+            className="nav-btn nav-btn-icon"
+            title="Downloads (Strg+J)"
+            onClick={onToggleDownloads}
+          >
+            ↓
+          </button>
+          {downloadsDropdown}
+        </div>
         <button
           className="nav-btn nav-btn-icon"
           title="Einstellungen"
@@ -156,4 +166,6 @@ export default function Toolbar({
       </button>
     </div>
   );
-}
+});
+
+export default Toolbar;

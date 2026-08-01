@@ -62,6 +62,11 @@ body {
     color 0.3s ease;
 }
 
+#root {
+  width: 100%;
+  height: 100%;
+}
+
 .app {
   display: flex;
   flex-direction: column;
@@ -948,4 +953,168 @@ webview {
     width: 300px;
     left: -300px;
   }
+}
+
+/* ============================================
+   SETTINGS PAGE (eigener Tab statt Side-Panel)
+   ============================================ */
+
+.internal-page {
+  flex: 1;
+  overflow: auto;
+  background: var(--bg-primary);
+}
+
+.settings-page {
+  display: flex;
+  height: 100%;
+}
+
+.settings-page-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--bg-secondary);
+  border-right: 1px solid var(--border-color);
+  padding: 24px 12px;
+}
+
+.settings-page-title {
+  font-size: 18px;
+  margin: 0 12px 20px;
+  color: var(--text-primary);
+}
+
+.settings-page-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin-bottom: 4px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+}
+
+.settings-page-nav-item:hover {
+  background: var(--button-hover);
+}
+
+.settings-page-nav-item.active {
+  background: var(--accent-color);
+  color: #fff;
+}
+
+.settings-page-nav-icon {
+  font-size: 16px;
+}
+
+.settings-page-content {
+  flex: 1;
+  padding: 40px 48px;
+  max-width: 640px;
+}
+
+.settings-page-section h3 {
+  font-size: 22px;
+  margin-bottom: 8px;
+  color: var(--text-primary);
+}
+
+.settings-page-hint {
+  color: var(--text-secondary);
+  font-size: 13px;
+  margin-bottom: 20px;
+}
+
+.settings-page-theme-cards {
+  display: flex;
+  gap: 16px;
+}
+
+.settings-page-theme-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 16px;
+  border: 2px solid var(--border-color);
+  border-radius: 12px;
+  background: var(--bg-secondary);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.settings-page-theme-card.active {
+  border-color: var(--accent-color);
+}
+
+.settings-page-theme-preview {
+  width: 120px;
+  height: 72px;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.settings-page-theme-preview-light {
+  background: #ffffff;
+}
+
+.settings-page-theme-preview-dark {
+  background: #1a1a1a;
+}
+
+/* ============================================
+   DOWNLOADS DROPDOWN (statt Side-Panel)
+   ============================================ */
+
+.downloads-btn-wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.downloads-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 360px;
+  max-height: 480px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.downloads-dropdown-header {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.downloads-dropdown-header h4 {
+  margin: 0;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.downloads-dropdown-actions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.downloads-dropdown-body {
+  overflow-y: auto;
+  padding: 10px 14px;
 }

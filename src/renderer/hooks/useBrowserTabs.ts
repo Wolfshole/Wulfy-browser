@@ -9,6 +9,12 @@ export interface Tab {
 
 let tabCounter = 0;
 
+export const SETTINGS_URL = "wulfy://settings";
+
+export function isInternalUrl(url: string): boolean {
+  return url.startsWith("wulfy://");
+}
+
 export function useBrowserTabs() {
   const [tabs, setTabs] = useState<Tab[]>([]);
   const [activeTabId, setActiveTabId] = useState<string>("");
@@ -37,6 +43,7 @@ export function useBrowserTabs() {
 
   const ensureProtocol = useCallback((input: string): string => {
     const url = input.trim();
+    if (isInternalUrl(url)) return url;
     if (url.startsWith("http://") || url.startsWith("https://")) return url;
     if (url.includes(".") && !url.includes(" ")) return `https://${url}`;
     return searchEngineRef.current.url.replace(
@@ -163,6 +170,15 @@ export function useBrowserTabs() {
     navigateToUrl("https://www.google.com");
   }, [navigateToUrl]);
 
+  const openSettingsTab = useCallback(() => {
+    const existing = tabsRef.current.find((t) => t.url === SETTINGS_URL);
+    if (existing) {
+      setActiveTabId(existing.id);
+    } else {
+      createNewTab(SETTINGS_URL, "Einstellungen");
+    }
+  }, [createNewTab]);
+
   // Webview-Events pro Tab anhängen, sobald ein neues <webview> gemountet wird.
   const bindWebviewEvents = useCallback(
     (tabId: string, webview: any) => {
@@ -268,6 +284,7 @@ export function useBrowserTabs() {
     refresh,
     stop,
     goHome,
+    openSettingsTab,
     registerWebviewRef,
     bindWebviewEvents,
     initialize,

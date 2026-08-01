@@ -68,6 +68,7 @@ contextBridge.exposeInMainWorld("electron", {
       ipcRenderer.invoke("downloads:pause", downloadId),
     resume: (downloadId: string) =>
       ipcRenderer.invoke("downloads:resume", downloadId),
+    openFolder: () => ipcRenderer.invoke("downloads:openFolder"),
 
     // Event-Bridges: geben eine Unsubscribe-Funktion zurück, praktisch für
     // React useEffect(() => { const off = ...; return off; }, [])

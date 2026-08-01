@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
-import type { Tab } from "../hooks/useBrowserTabs";
+import { useCallback, useEffect, useRef } from "react";
+import { isInternalUrl, SETTINGS_URL, type Tab } from "../hooks/useBrowserTabs";
+import SettingsPage from "./SettingsPage";
 
 interface Props {
   tabs: Tab[];
@@ -22,18 +23,26 @@ function WebviewSlot({
   const mounted = useRef(false);
   const cleanupRef = useRef<() => void>();
 
-  const setRef = (el: any) => {
-    registerWebviewRef(tab.id, el);
-    if (el && !mounted.current) {
-      mounted.current = true;
-      el.src = tab.url; // Initiale URL nur einmal setzen, danach übernimmt navigateToUrl()
-      cleanupRef.current = bindWebviewEvents(tab.id, el);
-    }
-    if (!el) {
-      cleanupRef.current?.();
-      mounted.current = false;
-    }
-  };
+  // WICHTIG: mit useCallback stabil halten. Ohne das erzeugt React bei jedem
+  // Render eine neue Ref-Funktion, ruft sie erneut auf (erst null, dann Element),
+  // wodurch el.src immer wieder neu gesetzt wird -> die Webview lädt endlos neu.
+  const setRef = useCallback(
+    (el: any) => {
+      registerWebviewRef(tab.id, el);
+      if (el && !mounted.current) {
+        mounted.current = true;
+        el.setAttribute("allowpopups", "true");
+        el.src = tab.url;
+        cleanupRef.current = bindWebviewEvents(tab.id, el);
+      }
+      if (!el) {
+        cleanupRef.current?.();
+        mounted.current = false;
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [tab.id, registerWebviewRef, bindWebviewEvents],
+  );
 
   useEffect(() => () => cleanupRef.current?.(), []);
 
@@ -42,7 +51,6 @@ function WebviewSlot({
     <webview
       ref={setRef}
       className="webview"
-      allowpopups={true}
       style={{ display: isActive ? "flex" : "none" }}
     />
   );
@@ -56,15 +64,33 @@ export default function BrowserView({
 }: Props) {
   return (
     <div className="browser-container">
-      {tabs.map((tab) => (
-        <WebviewSlot
-          key={tab.id}
-          tab={tab}
-          isActive={tab.id === activeTabId}
-          registerWebviewRef={registerWebviewRef}
-          bindWebviewEvents={bindWebviewEvents}
-        />
-      ))}
+      {tabs.map((tab) => {
+        const isActive = tab.id === activeTabId;
+
+        if (isInternalUrl(tab.url)) {
+          // Interne Seiten (aktuell nur Settings) sind React-Komponenten,
+          // keine Webviews - kein registerWebviewRef/bindWebviewEvents nötig.
+          return (
+            <div
+              key={tab.id}
+              className="internal-page"
+              style={{ display: isActive ? "flex" : "none" }}
+            >
+              {tab.url === SETTINGS_URL && <SettingsPage />}
+            </div>
+          );
+        }
+
+        return (
+          <WebviewSlot
+            key={tab.id}
+            tab={tab}
+            isActive={isActive}
+            registerWebviewRef={registerWebviewRef}
+            bindWebviewEvents={bindWebviewEvents}
+          />
+        );
+      })}
     </div>
   );
 }

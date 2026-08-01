@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
 import path from "path";
 import bookmarksManager from "./bookmarks-manager";
 import historyManager from "./history-manager";
@@ -189,6 +189,10 @@ ipcMain.handle("downloads:setPath", async () => {
 
 ipcMain.handle("downloads:getByDate", async (_evt, days?: number) => {
   return downloadsManager.getDownloadsByDate(days);
+});
+
+ipcMain.handle("downloads:openFolder", async () => {
+  await shell.openPath(downloadsManager.getDownloadPath());
 });
 
 ipcMain.handle("downloads:getByMimeType", async (_evt, mimeType: string) => {

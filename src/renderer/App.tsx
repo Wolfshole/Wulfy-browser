@@ -1,14 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Toolbar from "./components/Toolbar";
 import TabBar from "./components/TabBar";
 import ProgressBar from "./components/ProgressBar";
 import BrowserView from "./components/BrowserView";
 import SidePanel from "./components/SidePanel";
 import BookmarksPanel from "./components/BookmarksPanel";
+import HistoryPanel from "./components/HistoryPanel";
+import DownloadsDropdown from "./components/DownloadsDropdown";
 import { useBrowserTabs } from "./hooks/useBrowserTabs";
 import { useBookmarks } from "./hooks/useBookmarks";
+import { useHistory } from "./hooks/useHistory";
+import { useDownloads } from "./hooks/useDownloads";
 
-type PanelName = "bookmarks" | "history" | "downloads" | "settings" | null;
+type PanelName = "bookmarks" | "history" | null;
 
 export default function App() {
   const {
@@ -27,6 +31,7 @@ export default function App() {
     refresh,
     stop,
     goHome,
+    openSettingsTab,
     registerWebviewRef,
     bindWebviewEvents,
     initialize,
@@ -37,6 +42,28 @@ export default function App() {
     add: addBookmarkEntry,
     remove: removeBookmark,
   } = useBookmarks();
+
+  const [historySearch, setHistorySearch] = useState("");
+  const { entries: historyEntries, remove: removeHistoryEntry } =
+    useHistory(historySearch);
+
+  const [downloadsOpen, setDownloadsOpen] = useState(false);
+  const downloadsWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const {
+    downloads,
+    pause: pauseDownload,
+    resume: resumeDownload,
+    cancel: cancelDownload,
+    remove: removeDownload,
+    clear: clearDownloads,
+    chooseFolder,
+    openFolder,
+  } = useDownloads({
+    onStarted: () => setDownloadsOpen(true),
+    onComplete: () => setDownloadsOpen(true),
+  });
+
   const [activePanel, setActivePanel] = useState<PanelName>(null);
 
   const activeTab = tabs.find((t) => t.id === activeTabId);
@@ -58,13 +85,32 @@ export default function App() {
     alert(`✅ "${activeTab.title}" wurde zu Favoriten hinzugefügt!`);
   }, [activeTab, addBookmarkEntry]);
 
-  const handleBookmarkNavigate = useCallback(
+  const handleNavigateAndClose = useCallback(
     (url: string) => {
       navigateToUrl(url);
       closeAllPanels();
     },
     [navigateToUrl, closeAllPanels],
   );
+
+  const handleClearDownloads = useCallback(() => {
+    if (confirm("Alle Downloads aus der Liste entfernen?")) clearDownloads();
+  }, [clearDownloads]);
+
+  // Downloads-Dropdown schließen bei Klick außerhalb
+  useEffect(() => {
+    if (!downloadsOpen) return;
+    const handleClick = (e: MouseEvent) => {
+      if (
+        downloadsWrapperRef.current &&
+        !downloadsWrapperRef.current.contains(e.target as Node)
+      ) {
+        setDownloadsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [downloadsOpen]);
 
   // Globale Keyboard-Shortcuts
   useEffect(() => {
@@ -86,7 +132,14 @@ export default function App() {
           e.preventDefault();
           handleAddBookmark();
         }
-        // 'h'/'j' (History/Downloads Panels) kommen in den nächsten Schritten dazu
+        if (e.key === "h") {
+          e.preventDefault();
+          togglePanel("history");
+        }
+        if (e.key === "j") {
+          e.preventDefault();
+          setDownloadsOpen((prev) => !prev);
+        }
       }
 
       if (e.key === "F5" || (e.ctrlKey && e.key === "r")) {
@@ -96,6 +149,7 @@ export default function App() {
 
       if (e.key === "Escape") {
         closeAllPanels();
+        setDownloadsOpen(false);
         stop();
       }
 
@@ -123,6 +177,7 @@ export default function App() {
     goForward,
     handleAddBookmark,
     closeAllPanels,
+    togglePanel,
   ]);
 
   // "Neuer Tab" Event vom Main-Prozess (Menü o.ä.)
@@ -136,6 +191,7 @@ export default function App() {
     <div className="app">
       <header className="header">
         <Toolbar
+          ref={downloadsWrapperRef}
           currentUrl={activeTab?.url ?? ""}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
@@ -148,15 +204,23 @@ export default function App() {
           onNewTab={() => createNewTab()}
           onBookmark={handleAddBookmark}
           onToggleBookmarks={() => togglePanel("bookmarks")}
-          onToggleHistory={() => {
-            /* Schritt 3 */
-          }}
-          onToggleDownloads={() => {
-            /* Schritt 4 */
-          }}
-          onToggleSettings={() => {
-            /* Schritt 5 */
-          }}
+          onToggleHistory={() => togglePanel("history")}
+          onToggleDownloads={() => setDownloadsOpen((prev) => !prev)}
+          onToggleSettings={openSettingsTab}
+          downloadsDropdown={
+            downloadsOpen && (
+              <DownloadsDropdown
+                downloads={downloads}
+                onPause={pauseDownload}
+                onResume={resumeDownload}
+                onCancel={cancelDownload}
+                onDelete={removeDownload}
+                onOpenFolder={openFolder}
+                onChooseFolder={chooseFolder}
+                onClearAll={handleClearDownloads}
+              />
+            )
+          }
         />
         <ProgressBar isLoading={isLoading} />
       </header>
@@ -176,8 +240,30 @@ export default function App() {
       >
         <BookmarksPanel
           bookmarks={bookmarks}
-          onNavigate={handleBookmarkNavigate}
+          onNavigate={handleNavigateAndClose}
           onDelete={removeBookmark}
+        />
+      </SidePanel>
+
+      <SidePanel
+        id="history-panel"
+        title="Verlauf"
+        isActive={activePanel === "history"}
+        onClose={closeAllPanels}
+        headerExtra={
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Verlauf durchsuchen..."
+            value={historySearch}
+            onChange={(e) => setHistorySearch(e.target.value)}
+          />
+        }
+      >
+        <HistoryPanel
+          entries={historyEntries}
+          onNavigate={handleNavigateAndClose}
+          onDelete={removeHistoryEntry}
         />
       </SidePanel>
 
