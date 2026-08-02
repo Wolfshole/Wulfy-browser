@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSettings } from "../hooks/useSettings";
+import { useAIConfig } from "../hooks/useAIConfig";
 
 type Category = "general" | "search" | "tabs" | "ai";
 
@@ -20,6 +21,14 @@ export default function SettingsPage() {
     restoreTabs,
     setRestoreTabs,
   } = useSettings();
+
+  const { config: aiConfig, save: saveAIConfig } = useAIConfig();
+  const [aiConfigOpen, setAIConfigOpen] = useState(false);
+  const [aiConfigDraft, setAIConfigDraft] = useState(aiConfig);
+
+  useEffect(() => {
+    setAIConfigDraft(aiConfig);
+  }, [aiConfig]);
 
   const [category, setCategory] = useState<Category>("general");
 
@@ -106,17 +115,101 @@ export default function SettingsPage() {
         {category === "ai" && (
           <section className="settings-page-section">
             <h3>KI-Assistent</h3>
-            <p className="settings-page-hint">Kommt in Kürze.</p>
+            <p className="settings-page-hint">
+              Ein lokaler Hilfsassistent für Browser-Funktionen. Die
+              Verbindungsdaten unten sind für eine zukünftige Anbindung an einen
+              echten LLM-Provider vorbereitet.
+            </p>
+
             <button
               className="settings-btn"
-              onClick={() => alert("KI-Konfiguration kommt in Schritt 6 🙂")}
+              onClick={() => setAIConfigOpen((prev) => !prev)}
             >
-              KI Konfigurieren
+              {aiConfigOpen ? "Konfiguration schließen" : "KI Konfigurieren"}
             </button>
+
+            {aiConfigOpen && (
+              <div className="ai-config-form">
+                <label>
+                  Provider
+                  <select
+                    value={aiConfigDraft.provider}
+                    onChange={(e) =>
+                      setAIConfigDraft({
+                        ...aiConfigDraft,
+                        provider: e.target.value,
+                      })
+                    }
+                  >
+                    <option value="openai">OpenAI</option>
+                    <option value="anthropic">Anthropic</option>
+                    <option value="custom">Eigener Endpoint</option>
+                  </select>
+                </label>
+
+                <label>
+                  Modellname
+                  <input
+                    type="text"
+                    value={aiConfigDraft.modelName}
+                    onChange={(e) =>
+                      setAIConfigDraft({
+                        ...aiConfigDraft,
+                        modelName: e.target.value,
+                      })
+                    }
+                    placeholder="z. B. gpt-4"
+                  />
+                </label>
+
+                <label>
+                  Endpoint
+                  <input
+                    type="text"
+                    value={aiConfigDraft.endpoint}
+                    onChange={(e) =>
+                      setAIConfigDraft({
+                        ...aiConfigDraft,
+                        endpoint: e.target.value,
+                      })
+                    }
+                    placeholder="https://api.openai.com/v1"
+                  />
+                </label>
+
+                <label>
+                  API-Key
+                  <input
+                    type="password"
+                    value={aiConfigDraft.apiKey}
+                    onChange={(e) =>
+                      setAIConfigDraft({
+                        ...aiConfigDraft,
+                        apiKey: e.target.value,
+                      })
+                    }
+                    placeholder="sk-..."
+                  />
+                </label>
+
+                <button
+                  className="settings-btn"
+                  onClick={async () => {
+                    await saveAIConfig(aiConfigDraft);
+                    setAIConfigOpen(false);
+                  }}
+                >
+                  Speichern
+                </button>
+              </div>
+            )}
+
             <button
               className="settings-btn"
               style={{ marginTop: 10 }}
-              onClick={() => alert("KI-Chat kommt in Schritt 6 🙂")}
+              onClick={() =>
+                window.dispatchEvent(new CustomEvent("open-ai-chat"))
+              }
             >
               KI-Chat öffnen
             </button>

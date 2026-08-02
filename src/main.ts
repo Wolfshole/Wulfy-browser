@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, shell } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from "electron";
 import path from "path";
 import bookmarksManager from "./bookmarks-manager";
 import historyManager from "./history-manager";
@@ -10,6 +10,8 @@ import aiManager from "./ai-manager";
 let mainWindow: BrowserWindow;
 
 const isDev = !app.isPackaged;
+
+Menu.setApplicationMenu(null);
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({

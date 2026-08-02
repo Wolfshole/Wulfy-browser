@@ -1,6 +1,12 @@
 import { useCallback, useEffect, useRef } from "react";
-import { isInternalUrl, SETTINGS_URL, type Tab } from "../hooks/useBrowserTabs";
+import {
+  isInternalUrl,
+  SETTINGS_URL,
+  AI_CHAT_URL,
+  type Tab,
+} from "../hooks/useBrowserTabs";
 import SettingsPage from "./SettingsPage";
+import AIChatPage from "./AIChatPage";
 
 interface Props {
   tabs: Tab[];
@@ -77,6 +83,7 @@ export default function BrowserView({
               style={{ display: isActive ? "flex" : "none" }}
             >
               {tab.url === SETTINGS_URL && <SettingsPage />}
+              {tab.url === AI_CHAT_URL && <AIChatPage />}
             </div>
           );
         }

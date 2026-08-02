@@ -10,6 +10,7 @@ export interface Tab {
 let tabCounter = 0;
 
 export const SETTINGS_URL = "wulfy://settings";
+export const AI_CHAT_URL = "wulfy://ai-chat";
 
 export function isInternalUrl(url: string): boolean {
   return url.startsWith("wulfy://");
@@ -179,6 +180,15 @@ export function useBrowserTabs() {
     }
   }, [createNewTab]);
 
+  const openAIChatTab = useCallback(() => {
+    const existing = tabsRef.current.find((t) => t.url === AI_CHAT_URL);
+    if (existing) {
+      setActiveTabId(existing.id);
+    } else {
+      createNewTab(AI_CHAT_URL, "KI-Assistent");
+    }
+  }, [createNewTab]);
+
   // Webview-Events pro Tab anhängen, sobald ein neues <webview> gemountet wird.
   const bindWebviewEvents = useCallback(
     (tabId: string, webview: any) => {
@@ -285,6 +295,7 @@ export function useBrowserTabs() {
     stop,
     goHome,
     openSettingsTab,
+    openAIChatTab,
     registerWebviewRef,
     bindWebviewEvents,
     initialize,

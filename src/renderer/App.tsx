@@ -32,6 +32,7 @@ export default function App() {
     stop,
     goHome,
     openSettingsTab,
+    openAIChatTab,
     registerWebviewRef,
     bindWebviewEvents,
     initialize,
@@ -71,6 +72,15 @@ export default function App() {
   useEffect(() => {
     initialize();
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Theme direkt beim Start anwenden, unabhängig davon, ob die Settings-Seite
+  // je geöffnet wird (dort sitzt useSettings, das läuft nur bei Mount der Seite).
+  useEffect(() => {
+    (async () => {
+      const savedTheme = await window.electron.settings.getTheme();
+      document.body.classList.toggle("dark-mode", savedTheme === "dark");
+    })();
   }, []);
 
   const closeAllPanels = useCallback(() => setActivePanel(null), []);
@@ -186,6 +196,13 @@ export default function App() {
     window.addEventListener("new-tab", handler);
     return () => window.removeEventListener("new-tab", handler);
   }, [createNewTab]);
+
+  // KI-Chat-Tab öffnen, ausgelöst vom "KI-Chat öffnen"-Button in der Settings-Seite
+  useEffect(() => {
+    const handler = () => openAIChatTab();
+    window.addEventListener("open-ai-chat", handler);
+    return () => window.removeEventListener("open-ai-chat", handler);
+  }, [openAIChatTab]);
 
   return (
     <div className="app">
