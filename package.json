@@ -14,15 +14,15 @@
     "watch-ts": "tsc --watch --outDir dist",
     "dev-renderer": "vite",
     "electron-dev": "wait-on tcp:5173 dist/main.js && electron .",
-    "copy-assets": "node -e \"const fs=require('fs'); fs.copyFileSync('src/app-icon.png','dist/app-icon.png'); fs.copyFileSync('src/title-icon.png','dist/title-icon.png'); fs.cpSync('renderer','dist/renderer',{recursive:true}); fs.copyFileSync('dist/renderer.js','dist/renderer/renderer.js');\"",
+    "copy-assets": "node -e \"const fs=require('fs'); const path=require('path'); if(!fs.existsSync('dist')) fs.mkdirSync('dist'); fs.copyFileSync('src/app-icon.png','dist/app-icon.png'); fs.copyFileSync('src/title-icon.png','dist/title-icon.png');\"",
     "build-ts": "tsc --outDir dist && npm run copy-assets",
-    "build-renderer": "node -e \"console.log('Renderer-Dateien wurden nach dist/renderer kopiert.')\"",
+    "build-renderer": "vite build",
     "build-all": "npm run build-ts && npm run build-renderer",
     "start": "npm run build-all && electron .",
     "build": "npm run build-all && electron-builder --publish never",
     "pack": "electron-builder --dir",
     "dist": "npm run build-all && electron-builder --publish never",
-    "prepare": "npm run build-ts"
+    "prepare": "npm run build-all"
   },
   "build": {
     "appId": "com.wulfy.browser",
