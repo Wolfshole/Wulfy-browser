@@ -276,6 +276,47 @@ ipcMain.handle("settings:getRestoreTabs", async () => {
   return settingsManager.getRestoreTabs();
 });
 
+ipcMain.handle("settings:getAccentColor", async () => {
+  return settingsManager.getAccentColor();
+});
+
+ipcMain.handle("settings:setAccentColor", async (_evt, color: string) => {
+  settingsManager.setAccentColor(color);
+  return true;
+});
+
+ipcMain.handle("settings:getThemePresets", async () => {
+  return settingsManager.getThemePresets();
+});
+
+ipcMain.handle("settings:applyThemePreset", async (_evt, presetId: string) => {
+  return settingsManager.applyThemePreset(presetId);
+});
+
+ipcMain.handle("settings:getBackgroundImage", async () => {
+  return settingsManager.getBackgroundImage();
+});
+
+ipcMain.handle("settings:chooseBackgroundImage", async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [
+      { name: "Bilder", extensions: ["png", "jpg", "jpeg", "webp", "gif"] },
+    ],
+  });
+
+  if (!result.canceled && result.filePaths.length > 0) {
+    settingsManager.setBackgroundImage(result.filePaths[0]);
+    return result.filePaths[0];
+  }
+  return null;
+});
+
+ipcMain.handle("settings:clearBackgroundImage", async () => {
+  settingsManager.setBackgroundImage("");
+  return true;
+});
+
 ipcMain.handle("settings:setRestoreTabs", async (_evt, enabled: boolean) => {
   settingsManager.setRestoreTabs(enabled);
   return true;

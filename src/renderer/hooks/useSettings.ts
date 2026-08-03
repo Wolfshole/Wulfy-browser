@@ -1,11 +1,26 @@
 import { useCallback, useEffect, useState } from "react";
-import type { SearchEngine } from "../electron.d";
+import type { SearchEngine, ThemePreset } from "../electron.d";
+import { applyAccentColor } from "../utils/color";
+
+function applyBackgroundImage(path: string) {
+  if (path) {
+    document.documentElement.style.setProperty(
+      "--toolbar-bg-image",
+      `url("file://${path}")`,
+    );
+  } else {
+    document.documentElement.style.removeProperty("--toolbar-bg-image");
+  }
+}
 
 export function useSettings() {
   const [theme, setThemeState] = useState<"light" | "dark">("light");
   const [searchEngines, setSearchEngines] = useState<SearchEngine[]>([]);
   const [selectedEngineId, setSelectedEngineId] = useState("google");
   const [restoreTabs, setRestoreTabsState] = useState(false);
+  const [accentColor, setAccentColorState] = useState("#0078d4");
+  const [backgroundImage, setBackgroundImageState] = useState("");
+  const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -21,6 +36,19 @@ export function useSettings() {
 
       const restore = await window.electron.settings.getRestoreTabs();
       setRestoreTabsState(Boolean(restore));
+
+      const color = await window.electron.settings.getAccentColor();
+      if (color) {
+        setAccentColorState(color);
+        applyAccentColor(color);
+      }
+
+      const bgImage = await window.electron.settings.getBackgroundImage();
+      setBackgroundImageState(bgImage);
+      applyBackgroundImage(bgImage);
+
+      const presets = await window.electron.settings.getThemePresets();
+      setThemePresets(presets || []);
     })();
   }, []);
 
@@ -40,6 +68,34 @@ export function useSettings() {
     await window.electron.settings.setRestoreTabs(enabled);
   }, []);
 
+  const setAccentColor = useCallback(async (color: string) => {
+    setAccentColorState(color);
+    applyAccentColor(color);
+    await window.electron.settings.setAccentColor(color);
+  }, []);
+
+  const applyPreset = useCallback(async (presetId: string) => {
+    const preset = await window.electron.settings.applyThemePreset(presetId);
+    if (preset) {
+      setAccentColorState(preset.accentColor);
+      applyAccentColor(preset.accentColor);
+    }
+  }, []);
+
+  const chooseBackgroundImage = useCallback(async () => {
+    const path = await window.electron.settings.chooseBackgroundImage();
+    if (path) {
+      setBackgroundImageState(path);
+      applyBackgroundImage(path);
+    }
+  }, []);
+
+  const clearBackgroundImage = useCallback(async () => {
+    await window.electron.settings.clearBackgroundImage();
+    setBackgroundImageState("");
+    applyBackgroundImage("");
+  }, []);
+
   return {
     theme,
     setTheme,
@@ -48,5 +104,12 @@ export function useSettings() {
     setSearchEngine,
     restoreTabs,
     setRestoreTabs,
+    accentColor,
+    setAccentColor,
+    themePresets,
+    applyPreset,
+    backgroundImage,
+    chooseBackgroundImage,
+    clearBackgroundImage,
   };
 }

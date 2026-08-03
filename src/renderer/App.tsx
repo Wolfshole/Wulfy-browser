@@ -11,6 +11,7 @@ import { useBrowserTabs } from "./hooks/useBrowserTabs";
 import { useBookmarks } from "./hooks/useBookmarks";
 import { useHistory } from "./hooks/useHistory";
 import { useDownloads } from "./hooks/useDownloads";
+import { applyAccentColor } from "./utils/color";
 
 type PanelName = "bookmarks" | "history" | null;
 
@@ -74,12 +75,24 @@ export default function App() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Theme direkt beim Start anwenden, unabhängig davon, ob die Settings-Seite
-  // je geöffnet wird (dort sitzt useSettings, das läuft nur bei Mount der Seite).
+  // Theme + Akzentfarbe direkt beim Start anwenden, unabhängig davon, ob die
+  // Settings-Seite je geöffnet wird (dort sitzt useSettings, das läuft nur bei
+  // Mount der Seite selbst).
   useEffect(() => {
     (async () => {
       const savedTheme = await window.electron.settings.getTheme();
       document.body.classList.toggle("dark-mode", savedTheme === "dark");
+
+      const savedAccent = await window.electron.settings.getAccentColor();
+      if (savedAccent) applyAccentColor(savedAccent);
+
+      const savedBgImage = await window.electron.settings.getBackgroundImage();
+      if (savedBgImage) {
+        document.documentElement.style.setProperty(
+          "--toolbar-bg-image",
+          `url("file://${savedBgImage}")`,
+        );
+      }
     })();
   }, []);
 

@@ -106,6 +106,9 @@ body {
 
 .header {
   background: var(--bg-secondary);
+  background-image: var(--toolbar-bg-image, none);
+  background-size: cover;
+  background-position: center;
   border-bottom: 1px solid var(--border-color);
   padding: 0;
   flex-shrink: 0;
@@ -1257,4 +1260,68 @@ webview {
 .ai-chat-send-btn:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+/* ============================================
+   AKZENTFARBE (freier Farbwähler + Swatches)
+   ============================================ */
+
+.accent-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.accent-color-input {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 2px solid var(--border-color);
+  border-radius: 10px;
+  cursor: pointer;
+  background: none;
+}
+
+.accent-color-value {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-family: monospace;
+}
+
+.accent-color-swatches {
+  display: flex;
+  gap: 10px;
+}
+
+.accent-color-swatch {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+}
+
+.accent-color-swatch.active {
+  border-color: var(--text-primary);
+}
+
+.background-image-preview-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.background-image-preview {
+  width: 160px;
+  height: 90px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.background-image-preview-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }

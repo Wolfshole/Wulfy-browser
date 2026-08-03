@@ -32,6 +32,12 @@ export interface SavedTab {
   title: string;
 }
 
+export interface ThemePreset {
+  id: string;
+  name: string;
+  accentColor: string;
+}
+
 export interface ElectronAPI {
   newTab: () => void;
   openDevTools: () => void;
@@ -109,6 +115,15 @@ export interface ElectronAPI {
     setRestoreTabs: (enabled: boolean) => Promise<void>;
     getSavedTabs: () => Promise<SavedTab[]>;
     setSavedTabs: (tabs: SavedTab[]) => Promise<void>;
+    getAccentColor: () => Promise<string>;
+    setAccentColor: (color: string) => Promise<boolean>;
+    getThemePresets: () => Promise<ThemePreset[]>;
+    applyThemePreset: (presetId: string) => Promise<ThemePreset | undefined>;
+    getBackgroundImage: () => Promise<string>;
+    chooseBackgroundImage: () => Promise<string | null>;
+    clearBackgroundImage: () => Promise<boolean>;
+    getAccentColor: () => Promise<string>;
+    setAccentColor: (color: string) => Promise<void>;
   };
   ai: {
     createConversation: () => Promise<any>;

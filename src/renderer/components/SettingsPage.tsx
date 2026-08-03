@@ -20,6 +20,13 @@ export default function SettingsPage() {
     setSearchEngine,
     restoreTabs,
     setRestoreTabs,
+    accentColor,
+    setAccentColor,
+    themePresets,
+    applyPreset,
+    backgroundImage,
+    chooseBackgroundImage,
+    clearBackgroundImage,
   } = useSettings();
 
   const { config: aiConfig, save: saveAIConfig } = useAIConfig();
@@ -73,6 +80,70 @@ export default function SettingsPage() {
                 🌙 Dunkel
               </button>
             </div>
+
+            <h3 style={{ marginTop: 28 }}>Akzentfarbe</h3>
+            <p className="settings-page-hint">
+              Bestimmt die Farbe von Buttons, aktiven Tabs und Hervorhebungen im
+              ganzen Browser.
+            </p>
+            <div className="accent-color-picker">
+              <input
+                type="color"
+                className="accent-color-input"
+                value={accentColor}
+                onChange={(e) => setAccentColor(e.target.value)}
+              />
+              <span className="accent-color-value">{accentColor}</span>
+            </div>
+            <div className="accent-color-swatches">
+              {themePresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  className={`accent-color-swatch${
+                    accentColor.toLowerCase() ===
+                    preset.accentColor.toLowerCase()
+                      ? " active"
+                      : ""
+                  }`}
+                  style={{ background: preset.accentColor }}
+                  onClick={() => applyPreset(preset.id)}
+                  title={preset.name}
+                />
+              ))}
+            </div>
+
+            <h3 style={{ marginTop: 28 }}>Hintergrundbild</h3>
+            <p className="settings-page-hint">
+              Legt ein Bild hinter Toolbar und Tab-Leiste, ähnlich wie bei Opera
+              GX.
+            </p>
+            {backgroundImage ? (
+              <div className="background-image-preview-row">
+                <img
+                  src={`file://${backgroundImage}`}
+                  alt="Hintergrundbild"
+                  className="background-image-preview"
+                />
+                <div className="background-image-preview-actions">
+                  <button
+                    className="settings-btn"
+                    onClick={chooseBackgroundImage}
+                  >
+                    Anderes Bild wählen
+                  </button>
+                  <button
+                    className="settings-btn"
+                    onClick={clearBackgroundImage}
+                  >
+                    Entfernen
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button className="settings-btn" onClick={chooseBackgroundImage}>
+                Bild wählen
+              </button>
+            )}
           </section>
         )}
 

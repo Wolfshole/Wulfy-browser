@@ -121,6 +121,17 @@ contextBridge.exposeInMainWorld("electron", {
     getSavedTabs: () => ipcRenderer.invoke("settings:getSavedTabs"),
     setSavedTabs: (tabs: any) =>
       ipcRenderer.invoke("settings:setSavedTabs", tabs),
+    getAccentColor: () => ipcRenderer.invoke("settings:getAccentColor"),
+    setAccentColor: (color: string) =>
+      ipcRenderer.invoke("settings:setAccentColor", color),
+    getThemePresets: () => ipcRenderer.invoke("settings:getThemePresets"),
+    applyThemePreset: (presetId: string) =>
+      ipcRenderer.invoke("settings:applyThemePreset", presetId),
+    getBackgroundImage: () => ipcRenderer.invoke("settings:getBackgroundImage"),
+    chooseBackgroundImage: () =>
+      ipcRenderer.invoke("settings:chooseBackgroundImage"),
+    clearBackgroundImage: () =>
+      ipcRenderer.invoke("settings:clearBackgroundImage"),
   },
 
   ai: {
