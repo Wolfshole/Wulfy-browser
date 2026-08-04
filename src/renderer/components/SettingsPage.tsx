@@ -1,14 +1,14 @@
-import { useEffect, useState } from "react";
-import { useSettings } from "../hooks/useSettings";
-import { useAIConfig } from "../hooks/useAIConfig";
+import { useEffect, useState } from 'react';
+import { useSettings } from '../hooks/useSettings';
+import { useAIConfig } from '../hooks/useAIConfig';
 
-type Category = "general" | "search" | "tabs" | "ai";
+type Category = 'general' | 'search' | 'tabs' | 'ai';
 
 const CATEGORIES: { id: Category; label: string; icon: string }[] = [
-  { id: "general", label: "Design", icon: "🎨" },
-  { id: "search", label: "Suchmaschine", icon: "🔍" },
-  { id: "tabs", label: "Tabs", icon: "🗂️" },
-  { id: "ai", label: "KI-Assistent", icon: "🤖" },
+  { id: 'general', label: 'Design', icon: '🎨' },
+  { id: 'search', label: 'Suchmaschine', icon: '🔍' },
+  { id: 'tabs', label: 'Tabs', icon: '🗂️' },
+  { id: 'ai', label: 'KI-Assistent', icon: '🤖' },
 ];
 
 export default function SettingsPage() {
@@ -37,7 +37,7 @@ export default function SettingsPage() {
     setAIConfigDraft(aiConfig);
   }, [aiConfig]);
 
-  const [category, setCategory] = useState<Category>("general");
+  const [category, setCategory] = useState<Category>('general');
 
   return (
     <div className="settings-page">
@@ -47,7 +47,7 @@ export default function SettingsPage() {
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
-              className={`settings-page-nav-item${category === cat.id ? " active" : ""}`}
+              className={`settings-page-nav-item${category === cat.id ? ' active' : ''}`}
               onClick={() => setCategory(cat.id)}
             >
               <span className="settings-page-nav-icon">{cat.icon}</span>
@@ -58,23 +58,21 @@ export default function SettingsPage() {
       </aside>
 
       <div className="settings-page-content">
-        {category === "general" && (
+        {category === 'general' && (
           <section className="settings-page-section">
             <h3>Design</h3>
-            <p className="settings-page-hint">
-              Wähle, wie Wulfy Browser aussehen soll.
-            </p>
+            <p className="settings-page-hint">Wähle, wie Wulfy Browser aussehen soll.</p>
             <div className="settings-page-theme-cards">
               <button
-                className={`settings-page-theme-card${theme === "light" ? " active" : ""}`}
-                onClick={() => setTheme("light")}
+                className={`settings-page-theme-card${theme === 'light' ? ' active' : ''}`}
+                onClick={() => setTheme('light')}
               >
                 <span className="settings-page-theme-preview settings-page-theme-preview-light" />
                 ☀️ Hell
               </button>
               <button
-                className={`settings-page-theme-card${theme === "dark" ? " active" : ""}`}
-                onClick={() => setTheme("dark")}
+                className={`settings-page-theme-card${theme === 'dark' ? ' active' : ''}`}
+                onClick={() => setTheme('dark')}
               >
                 <span className="settings-page-theme-preview settings-page-theme-preview-dark" />
                 🌙 Dunkel
@@ -83,8 +81,7 @@ export default function SettingsPage() {
 
             <h3 style={{ marginTop: 28 }}>Akzentfarbe</h3>
             <p className="settings-page-hint">
-              Bestimmt die Farbe von Buttons, aktiven Tabs und Hervorhebungen im
-              ganzen Browser.
+              Bestimmt die Farbe von Buttons, aktiven Tabs und Hervorhebungen im ganzen Browser.
             </p>
             <div className="accent-color-picker">
               <input
@@ -100,10 +97,7 @@ export default function SettingsPage() {
                 <button
                   key={preset.id}
                   className={`accent-color-swatch${
-                    accentColor.toLowerCase() ===
-                    preset.accentColor.toLowerCase()
-                      ? " active"
-                      : ""
+                    accentColor.toLowerCase() === preset.accentColor.toLowerCase() ? ' active' : ''
                   }`}
                   style={{ background: preset.accentColor }}
                   onClick={() => applyPreset(preset.id)}
@@ -114,27 +108,16 @@ export default function SettingsPage() {
 
             <h3 style={{ marginTop: 28 }}>Hintergrundbild</h3>
             <p className="settings-page-hint">
-              Legt ein Bild hinter Toolbar und Tab-Leiste, ähnlich wie bei Opera
-              GX.
+              Legt ein Bild hinter Toolbar und Tab-Leiste, ähnlich wie bei Opera GX.
             </p>
             {backgroundImage ? (
               <div className="background-image-preview-row">
-                <img
-                  src={`file://${backgroundImage}`}
-                  alt="Hintergrundbild"
-                  className="background-image-preview"
-                />
+                <img src={backgroundImage} alt="Hintergrundbild" className="background-image-preview" />
                 <div className="background-image-preview-actions">
-                  <button
-                    className="settings-btn"
-                    onClick={chooseBackgroundImage}
-                  >
+                  <button className="settings-btn" onClick={chooseBackgroundImage}>
                     Anderes Bild wählen
                   </button>
-                  <button
-                    className="settings-btn"
-                    onClick={clearBackgroundImage}
-                  >
+                  <button className="settings-btn" onClick={clearBackgroundImage}>
                     Entfernen
                   </button>
                 </div>
@@ -147,12 +130,11 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {category === "search" && (
+        {category === 'search' && (
           <section className="settings-page-section">
             <h3>Suchmaschine</h3>
             <p className="settings-page-hint">
-              Wird verwendet, wenn du in der Adressleiste keine vollständige URL
-              eingibst.
+              Wird verwendet, wenn du in der Adressleiste keine vollständige URL eingibst.
             </p>
             <select
               className="search-select"
@@ -161,7 +143,7 @@ export default function SettingsPage() {
             >
               {searchEngines.map((engine) => (
                 <option key={engine.id} value={engine.id}>
-                  {engine.icon ? `${engine.icon} ` : ""}
+                  {engine.icon ? `${engine.icon} ` : ''}
                   {engine.name}
                 </option>
               ))}
@@ -169,7 +151,7 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {category === "tabs" && (
+        {category === 'tabs' && (
           <section className="settings-page-section">
             <h3>Tabs</h3>
             <label className="settings-checkbox">
@@ -183,20 +165,16 @@ export default function SettingsPage() {
           </section>
         )}
 
-        {category === "ai" && (
+        {category === 'ai' && (
           <section className="settings-page-section">
             <h3>KI-Assistent</h3>
             <p className="settings-page-hint">
-              Ein lokaler Hilfsassistent für Browser-Funktionen. Die
-              Verbindungsdaten unten sind für eine zukünftige Anbindung an einen
-              echten LLM-Provider vorbereitet.
+              Ein lokaler Hilfsassistent für Browser-Funktionen. Die Verbindungsdaten unten sind für eine
+              zukünftige Anbindung an einen echten LLM-Provider vorbereitet.
             </p>
 
-            <button
-              className="settings-btn"
-              onClick={() => setAIConfigOpen((prev) => !prev)}
-            >
-              {aiConfigOpen ? "Konfiguration schließen" : "KI Konfigurieren"}
+            <button className="settings-btn" onClick={() => setAIConfigOpen((prev) => !prev)}>
+              {aiConfigOpen ? 'Konfiguration schließen' : 'KI Konfigurieren'}
             </button>
 
             {aiConfigOpen && (
@@ -205,12 +183,7 @@ export default function SettingsPage() {
                   Provider
                   <select
                     value={aiConfigDraft.provider}
-                    onChange={(e) =>
-                      setAIConfigDraft({
-                        ...aiConfigDraft,
-                        provider: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setAIConfigDraft({ ...aiConfigDraft, provider: e.target.value })}
                   >
                     <option value="openai">OpenAI</option>
                     <option value="anthropic">Anthropic</option>
@@ -223,12 +196,7 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     value={aiConfigDraft.modelName}
-                    onChange={(e) =>
-                      setAIConfigDraft({
-                        ...aiConfigDraft,
-                        modelName: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setAIConfigDraft({ ...aiConfigDraft, modelName: e.target.value })}
                     placeholder="z. B. gpt-4"
                   />
                 </label>
@@ -238,12 +206,7 @@ export default function SettingsPage() {
                   <input
                     type="text"
                     value={aiConfigDraft.endpoint}
-                    onChange={(e) =>
-                      setAIConfigDraft({
-                        ...aiConfigDraft,
-                        endpoint: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setAIConfigDraft({ ...aiConfigDraft, endpoint: e.target.value })}
                     placeholder="https://api.openai.com/v1"
                   />
                 </label>
@@ -253,12 +216,7 @@ export default function SettingsPage() {
                   <input
                     type="password"
                     value={aiConfigDraft.apiKey}
-                    onChange={(e) =>
-                      setAIConfigDraft({
-                        ...aiConfigDraft,
-                        apiKey: e.target.value,
-                      })
-                    }
+                    onChange={(e) => setAIConfigDraft({ ...aiConfigDraft, apiKey: e.target.value })}
                     placeholder="sk-..."
                   />
                 </label>
@@ -278,9 +236,7 @@ export default function SettingsPage() {
             <button
               className="settings-btn"
               style={{ marginTop: 10 }}
-              onClick={() =>
-                window.dispatchEvent(new CustomEvent("open-ai-chat"))
-              }
+              onClick={() => window.dispatchEvent(new CustomEvent('open-ai-chat'))}
             >
               KI-Chat öffnen
             </button>

@@ -1,5 +1,6 @@
-import { app, BrowserWindow, ipcMain, dialog, shell, Menu } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, shell, Menu, MenuItem, clipboard } from "electron";
 import path from "path";
+import fs from "fs";
 import bookmarksManager from "./bookmarks-manager";
 import historyManager from "./history-manager";
 import downloadsManager from "./downloads-manager";
@@ -12,6 +13,22 @@ let mainWindow: BrowserWindow;
 const isDev = !app.isPackaged;
 
 Menu.setApplicationMenu(null);
+
+/**
+ * Liest ein Bild vom Datenträger und gibt es als Base64-Data-URL zurück.
+ * Nötig, weil der Renderer (läuft im Dev-Modus über http://localhost)
+ * keine file://-Ressourcen laden darf ("Not allowed to load local resource").
+ */
+function getImageDataUrl(filePath: string): string {
+  try {
+    const buffer = fs.readFileSync(filePath);
+    const ext = path.extname(filePath).slice(1).toLowerCase();
+    const mime = ext === "jpg" ? "jpeg" : ext || "png";
+    return `data:image/${mime};base64,${buffer.toString("base64")}`;
+  } catch {
+    return "";
+  }
+}
 
 const createWindow = () => {
   mainWindow = new BrowserWindow({
@@ -46,6 +63,80 @@ const createWindow = () => {
 };
 
 app.on("ready", createWindow);
+
+// Rechtsklick-Kontextmenü ("Untersuchen" etc.) für jede Webview-Tab-Instanz.
+// web-contents-created feuert auch für Webview-Guests, nicht nur das Hauptfenster.
+app.on("web-contents-created", (_event, contents) => {
+  if (contents.getType() !== "webview") return;
+
+  contents.on("context-menu", (_e, params) => {
+    const menu = new Menu();
+
+    menu.append(
+      new MenuItem({
+        label: "Zurück",
+        enabled: contents.canGoBack(),
+        click: () => contents.goBack(),
+      }),
+    );
+    menu.append(
+      new MenuItem({
+        label: "Vorwärts",
+        enabled: contents.canGoForward(),
+        click: () => contents.goForward(),
+      }),
+    );
+    menu.append(
+      new MenuItem({
+        label: "Neu laden",
+        click: () => contents.reload(),
+      }),
+    );
+    menu.append(new MenuItem({ type: "separator" }));
+
+    if (params.linkURL) {
+      menu.append(
+        new MenuItem({
+          label: "Link-Adresse kopieren",
+          click: () => clipboard.writeText(params.linkURL),
+        }),
+      );
+    }
+
+    if (params.selectionText) {
+      menu.append(
+        new MenuItem({
+          label: "Kopieren",
+          click: () => contents.copy(),
+        }),
+      );
+    }
+
+    if (params.isEditable) {
+      menu.append(
+        new MenuItem({
+          label: "Einfügen",
+          click: () => contents.paste(),
+        }),
+      );
+    }
+
+    menu.append(new MenuItem({ type: "separator" }));
+    menu.append(
+      new MenuItem({
+        label: "Untersuchen",
+        click: () => {
+          contents.inspectElement(params.x, params.y);
+          if (contents.isDevToolsOpened()) {
+            contents.devToolsWebContents?.focus();
+          }
+        },
+      }),
+    );
+
+    menu.popup();
+  });
+});
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
@@ -294,20 +385,19 @@ ipcMain.handle("settings:applyThemePreset", async (_evt, presetId: string) => {
 });
 
 ipcMain.handle("settings:getBackgroundImage", async () => {
-  return settingsManager.getBackgroundImage();
+  const storedPath = settingsManager.getBackgroundImage();
+  return storedPath ? getImageDataUrl(storedPath) : "";
 });
 
 ipcMain.handle("settings:chooseBackgroundImage", async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ["openFile"],
-    filters: [
-      { name: "Bilder", extensions: ["png", "jpg", "jpeg", "webp", "gif"] },
-    ],
+    filters: [{ name: "Bilder", extensions: ["png", "jpg", "jpeg", "webp", "gif"] }],
   });
 
   if (!result.canceled && result.filePaths.length > 0) {
     settingsManager.setBackgroundImage(result.filePaths[0]);
-    return result.filePaths[0];
+    return getImageDataUrl(result.filePaths[0]);
   }
   return null;
 });

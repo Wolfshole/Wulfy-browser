@@ -1,258 +1,126 @@
-import Store from "electron-store";
+import Store from 'electron-store';
 
-export interface SearchEngine {
+export interface HistoryEntry {
   id: string;
-  name: string;
-  url: string; // URL mit {query} Platzhalter
-  icon?: string;
-}
-
-export interface SavedTab {
-  url: string;
   title: string;
+  url: string;
+  favicon?: string;
+  visitedAt: number;
+  visitCount: number;
 }
 
-export interface ThemePreset {
-  id: string;
-  name: string;
-  accentColor: string;
-}
-
-class SettingsManager {
+class HistoryManager {
   private store: Store;
-  private defaultSearchEngines: SearchEngine[] = [
-    {
-      id: "google",
-      name: "Google",
-      url: "https://www.google.com/search?q={query}",
-      icon: "🔍",
-    },
-    {
-      id: "bing",
-      name: "Bing",
-      url: "https://www.bing.com/search?q={query}",
-      icon: "🔷",
-    },
-    {
-      id: "duckduckgo",
-      name: "DuckDuckGo",
-      url: "https://duckduckgo.com/?q={query}",
-      icon: "🦆",
-    },
-    {
-      id: "wikipedia",
-      name: "Wikipedia",
-      url: "https://en.wikipedia.org/w/api.php?action=query&list=search&srsearch={query}&format=json",
-      icon: "📚",
-    },
-    {
-      id: "youtube",
-      name: "YouTube",
-      url: "https://www.youtube.com/results?search_query={query}",
-      icon: "📺",
-    },
-  ];
-
-  // Feste Preset-Themes (nur Akzentfarbe - Grundhelligkeit bleibt Hell/Dunkel).
-  // Nicht persistiert, dient nur als Auswahlliste für den Frontend-Farbwähler.
-  private themePresets: ThemePreset[] = [
-    { id: "default-blue", name: "Wulfy Blau", accentColor: "#0078d4" },
-    { id: "gx-purple", name: "GX Lila", accentColor: "#8e44ec" },
-    { id: "crimson", name: "Crimson", accentColor: "#e63950" },
-    { id: "emerald", name: "Smaragd", accentColor: "#1abc9c" },
-    { id: "sunset", name: "Sonnenuntergang", accentColor: "#ff7a45" },
-    { id: "gold", name: "Gold", accentColor: "#d4a017" },
-  ];
 
   constructor() {
     this.store = new Store({
-      name: "settings",
+      name: 'history',
       defaults: {
-        searchEngine: "google",
-        homepage: "https://www.google.com",
-        theme: "light",
-        searchEngines: this.defaultSearchEngines,
-        restoreTabs: false,
-        savedTabs: [],
-        accentColor: "",
-        backgroundImage: "",
+        history: [],
       },
     });
   }
 
   /**
-   * Standard-Suchmaschine abrufen
+   * Besuch hinzufügen. Existiert die URL schon, wird der Eintrag aktualisiert
+   * (Titel, Zeit, Besuchszähler) und nach oben verschoben statt dupliziert.
    */
-  getDefaultSearchEngine(): SearchEngine {
-    const engineId = this.store.get("searchEngine", "google") as string;
-    const engines = this.getSearchEngines();
-    return engines.find((e) => e.id === engineId) || engines[0];
-  }
+  addVisit(title: string, url: string, favicon?: string): HistoryEntry {
+    const history = this.getAllHistory();
+    const existingIndex = history.findIndex(h => h.url === url);
 
-  /**
-   * Standard-Suchmaschine setzen
-   */
-  setDefaultSearchEngine(engineId: string): void {
-    this.store.set("searchEngine", engineId);
-  }
+    if (existingIndex !== -1) {
+      const existing = history[existingIndex];
+      existing.title = title;
+      existing.favicon = favicon ?? existing.favicon;
+      existing.visitedAt = Date.now();
+      existing.visitCount = (existing.visitCount || 1) + 1;
+      history.splice(existingIndex, 1);
+      history.unshift(existing);
+      this.store.set('history', history);
+      return existing;
+    }
 
-  /**
-   * Alle Suchmaschinen abrufen
-   */
-  getSearchEngines(): SearchEngine[] {
-    return this.store.get(
-      "searchEngines",
-      this.defaultSearchEngines,
-    ) as SearchEngine[];
-  }
-
-  /**
-   * Suchmaschine nach ID finden
-   */
-  getSearchEngineById(id: string): SearchEngine | undefined {
-    return this.getSearchEngines().find((e) => e.id === id);
-  }
-
-  /**
-   * Benutzerdefinierte Suchmaschine hinzufügen
-   */
-  addCustomSearchEngine(
-    name: string,
-    url: string,
-    icon?: string,
-  ): SearchEngine {
-    const engines = this.getSearchEngines();
-    const engine: SearchEngine = {
-      id: `custom-${Date.now()}`,
-      name,
+    const entry: HistoryEntry = {
+      id: `hist-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      title,
       url,
-      icon,
+      favicon,
+      visitedAt: Date.now(),
+      visitCount: 1,
     };
-    engines.push(engine);
-    this.store.set("searchEngines", engines);
-    return engine;
+    history.unshift(entry);
+    this.store.set('history', history);
+    return entry;
   }
 
   /**
-   * Suchmaschine löschen
+   * Kompletten Verlauf abrufen (unsortiert nach Speicherreihenfolge = neueste zuerst)
    */
-  deleteSearchEngine(engineId: string): boolean {
-    let engines = this.getSearchEngines();
-    engines = engines.filter(
-      (e) => e.id !== engineId && !e.id.startsWith("custom-"),
-    );
-    this.store.set("searchEngines", engines);
+  getAllHistory(): HistoryEntry[] {
+    return this.store.get('history', []) as HistoryEntry[];
+  }
+
+  /**
+   * Verlauf mit optionalem Limit und Suchfilter (Titel oder URL)
+   */
+  getHistory(limit?: number, search?: string): HistoryEntry[] {
+    let history = this.getAllHistory();
+
+    if (search) {
+      const term = search.toLowerCase();
+      history = history.filter(
+        h => h.title.toLowerCase().includes(term) || h.url.toLowerCase().includes(term)
+      );
+    }
+
+    if (limit) {
+      history = history.slice(0, limit);
+    }
+
+    return history;
+  }
+
+  deleteEntry(entryId: string): boolean {
+    const history = this.getAllHistory().filter(h => h.id !== entryId);
+    this.store.set('history', history);
     return true;
   }
 
-  /**
-   * Homepage abrufen
-   */
-  getHomepage(): string {
-    return this.store.get("homepage", "https://www.google.com") as string;
+  deleteUrl(url: string): boolean {
+    const history = this.getAllHistory().filter(h => h.url !== url);
+    this.store.set('history', history);
+    return true;
   }
 
-  /**
-   * Homepage setzen
-   */
-  setHomepage(url: string): void {
-    this.store.set("homepage", url);
+  clearHistory(): void {
+    this.store.set('history', []);
   }
 
-  /**
-   * Theme abrufen
-   */
-  getTheme(): string {
-    return this.store.get("theme", "light") as string;
+  clearHistorySince(since: number): void {
+    const history = this.getAllHistory().filter(h => h.visitedAt < since);
+    this.store.set('history', history);
   }
 
-  /**
-   * Theme setzen
-   */
-  setTheme(theme: string): void {
-    this.store.set("theme", theme);
+  getTopVisited(limit: number = 10): HistoryEntry[] {
+    return [...this.getAllHistory()]
+      .sort((a, b) => (b.visitCount || 0) - (a.visitCount || 0))
+      .slice(0, limit);
   }
 
-  getRestoreTabs(): boolean {
-    return this.store.get("restoreTabs", false) as boolean;
+  getTodayHistory(): HistoryEntry[] {
+    const startOfDay = new Date();
+    startOfDay.setHours(0, 0, 0, 0);
+    return this.getAllHistory().filter(h => h.visitedAt >= startOfDay.getTime());
   }
 
-  setRestoreTabs(enabled: boolean): void {
-    this.store.set("restoreTabs", enabled);
+  exportHistory(): HistoryEntry[] {
+    return this.getAllHistory();
   }
 
-  getSavedTabs(): SavedTab[] {
-    return this.store.get("savedTabs", []) as SavedTab[];
-  }
-
-  setSavedTabs(tabs: SavedTab[]): void {
-    this.store.set("savedTabs", tabs);
-  }
-
-  /**
-   * Akzentfarbe abrufen (leerer String = Standardfarbe aus dem CSS)
-   */
-  getAccentColor(): string {
-    return this.store.get("accentColor", "") as string;
-  }
-
-  /**
-   * Akzentfarbe setzen (Hex-Code, z.B. "#8e44ec"), oder "" um zurückzusetzen
-   */
-  setAccentColor(color: string): void {
-    this.store.set("accentColor", color);
-  }
-
-  /**
-   * Verfügbare Preset-Themes abrufen
-   */
-  getThemePresets(): ThemePreset[] {
-    return this.themePresets;
-  }
-
-  /**
-   * Preset anwenden: setzt die Akzentfarbe auf den Preset-Wert
-   */
-  applyThemePreset(presetId: string): ThemePreset | undefined {
-    const preset = this.themePresets.find((p) => p.id === presetId);
-    if (preset) {
-      this.store.set("accentColor", preset.accentColor);
-    }
-    return preset;
-  }
-
-  /**
-   * Pfad zum Hintergrundbild abrufen (leerer String = kein Hintergrundbild)
-   */
-  getBackgroundImage(): string {
-    return this.store.get("backgroundImage", "") as string;
-  }
-
-  /**
-   * Pfad zum Hintergrundbild setzen, oder "" um zu entfernen
-   */
-  setBackgroundImage(path: string): void {
-    this.store.set("backgroundImage", path);
-  }
-
-  /**
-   * KI-Konfiguration abrufen
-   */
-  getAIConfig(): any {
-    return this.store.get("aiConfig", {
-      provider: "openai",
-      apiKey: "",
-      modelName: "gpt-4",
-      endpoint: "https://api.openai.com/v1",
-    });
-  }
-
-  /**
-   * KI-Konfiguration setzen
-   */
-  setAIConfig(config: any): void {
-    this.store.set("aiConfig", config);
+  importHistory(entries: HistoryEntry[]): void {
+    this.store.set('history', entries);
   }
 }
 
-export default new SettingsManager();
+export default new HistoryManager();

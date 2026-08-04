@@ -1,19 +1,19 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import Toolbar from "./components/Toolbar";
-import TabBar from "./components/TabBar";
-import ProgressBar from "./components/ProgressBar";
-import BrowserView from "./components/BrowserView";
-import SidePanel from "./components/SidePanel";
-import BookmarksPanel from "./components/BookmarksPanel";
-import HistoryPanel from "./components/HistoryPanel";
-import DownloadsDropdown from "./components/DownloadsDropdown";
-import { useBrowserTabs } from "./hooks/useBrowserTabs";
-import { useBookmarks } from "./hooks/useBookmarks";
-import { useHistory } from "./hooks/useHistory";
-import { useDownloads } from "./hooks/useDownloads";
-import { applyAccentColor } from "./utils/color";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import Toolbar from './components/Toolbar';
+import TabBar from './components/TabBar';
+import ProgressBar from './components/ProgressBar';
+import BrowserView from './components/BrowserView';
+import SidePanel from './components/SidePanel';
+import BookmarksPanel from './components/BookmarksPanel';
+import HistoryPanel from './components/HistoryPanel';
+import DownloadsDropdown from './components/DownloadsDropdown';
+import { useBrowserTabs } from './hooks/useBrowserTabs';
+import { useBookmarks } from './hooks/useBookmarks';
+import { useHistory } from './hooks/useHistory';
+import { useDownloads } from './hooks/useDownloads';
+import { applyAccentColor } from './utils/color';
 
-type PanelName = "bookmarks" | "history" | null;
+type PanelName = 'bookmarks' | 'history' | null;
 
 export default function App() {
   const {
@@ -39,15 +39,10 @@ export default function App() {
     initialize,
   } = useBrowserTabs();
 
-  const {
-    bookmarks,
-    add: addBookmarkEntry,
-    remove: removeBookmark,
-  } = useBookmarks();
+  const { bookmarks, add: addBookmarkEntry, remove: removeBookmark } = useBookmarks();
 
-  const [historySearch, setHistorySearch] = useState("");
-  const { entries: historyEntries, remove: removeHistoryEntry } =
-    useHistory(historySearch);
+  const [historySearch, setHistorySearch] = useState('');
+  const { entries: historyEntries, remove: removeHistoryEntry } = useHistory(historySearch);
 
   const [downloadsOpen, setDownloadsOpen] = useState(false);
   const downloadsWrapperRef = useRef<HTMLDivElement | null>(null);
@@ -81,17 +76,14 @@ export default function App() {
   useEffect(() => {
     (async () => {
       const savedTheme = await window.electron.settings.getTheme();
-      document.body.classList.toggle("dark-mode", savedTheme === "dark");
+      document.body.classList.toggle('dark-mode', savedTheme === 'dark');
 
       const savedAccent = await window.electron.settings.getAccentColor();
       if (savedAccent) applyAccentColor(savedAccent);
 
       const savedBgImage = await window.electron.settings.getBackgroundImage();
       if (savedBgImage) {
-        document.documentElement.style.setProperty(
-          "--toolbar-bg-image",
-          `url("file://${savedBgImage}")`,
-        );
+        document.body.style.setProperty('--toolbar-bg-image', `url("${savedBgImage}")`);
       }
     })();
   }, []);
@@ -113,82 +105,79 @@ export default function App() {
       navigateToUrl(url);
       closeAllPanels();
     },
-    [navigateToUrl, closeAllPanels],
+    [navigateToUrl, closeAllPanels]
   );
 
   const handleClearDownloads = useCallback(() => {
-    if (confirm("Alle Downloads aus der Liste entfernen?")) clearDownloads();
+    if (confirm('Alle Downloads aus der Liste entfernen?')) clearDownloads();
   }, [clearDownloads]);
 
   // Downloads-Dropdown schließen bei Klick außerhalb
   useEffect(() => {
     if (!downloadsOpen) return;
     const handleClick = (e: MouseEvent) => {
-      if (
-        downloadsWrapperRef.current &&
-        !downloadsWrapperRef.current.contains(e.target as Node)
-      ) {
+      if (downloadsWrapperRef.current && !downloadsWrapperRef.current.contains(e.target as Node)) {
         setDownloadsOpen(false);
       }
     };
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, [downloadsOpen]);
 
   // Globale Keyboard-Shortcuts
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.ctrlKey || e.metaKey) {
-        if (e.key === "t") {
+        if (e.key === 't') {
           e.preventDefault();
           createNewTab();
         }
-        if (e.key === "w") {
+        if (e.key === 'w') {
           e.preventDefault();
           closeTab(activeTabId);
         }
-        if (e.key === "Tab") {
+        if (e.key === 'Tab') {
           e.preventDefault();
           switchToNextTab();
         }
-        if (e.key === "d") {
+        if (e.key === 'd') {
           e.preventDefault();
           handleAddBookmark();
         }
-        if (e.key === "h") {
+        if (e.key === 'h') {
           e.preventDefault();
-          togglePanel("history");
+          togglePanel('history');
         }
-        if (e.key === "j") {
+        if (e.key === 'j') {
           e.preventDefault();
           setDownloadsOpen((prev) => !prev);
         }
       }
 
-      if (e.key === "F5" || (e.ctrlKey && e.key === "r")) {
+      if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
         e.preventDefault();
         refresh();
       }
 
-      if (e.key === "Escape") {
+      if (e.key === 'Escape') {
         closeAllPanels();
         setDownloadsOpen(false);
         stop();
       }
 
-      if (e.altKey && e.key === "ArrowLeft") {
+      if (e.altKey && e.key === 'ArrowLeft') {
         e.preventDefault();
         goBack();
       }
 
-      if (e.altKey && e.key === "ArrowRight") {
+      if (e.altKey && e.key === 'ArrowRight') {
         e.preventDefault();
         goForward();
       }
     };
 
-    document.addEventListener("keydown", handler);
-    return () => document.removeEventListener("keydown", handler);
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
   }, [
     activeTabId,
     createNewTab,
@@ -206,15 +195,15 @@ export default function App() {
   // "Neuer Tab" Event vom Main-Prozess (Menü o.ä.)
   useEffect(() => {
     const handler = () => createNewTab();
-    window.addEventListener("new-tab", handler);
-    return () => window.removeEventListener("new-tab", handler);
+    window.addEventListener('new-tab', handler);
+    return () => window.removeEventListener('new-tab', handler);
   }, [createNewTab]);
 
   // KI-Chat-Tab öffnen, ausgelöst vom "KI-Chat öffnen"-Button in der Settings-Seite
   useEffect(() => {
     const handler = () => openAIChatTab();
-    window.addEventListener("open-ai-chat", handler);
-    return () => window.removeEventListener("open-ai-chat", handler);
+    window.addEventListener('open-ai-chat', handler);
+    return () => window.removeEventListener('open-ai-chat', handler);
   }, [openAIChatTab]);
 
   return (
@@ -222,7 +211,7 @@ export default function App() {
       <header className="header">
         <Toolbar
           ref={downloadsWrapperRef}
-          currentUrl={activeTab?.url ?? ""}
+          currentUrl={activeTab?.url ?? ''}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onBack={goBack}
@@ -233,8 +222,8 @@ export default function App() {
           onNavigate={navigateToUrl}
           onNewTab={() => createNewTab()}
           onBookmark={handleAddBookmark}
-          onToggleBookmarks={() => togglePanel("bookmarks")}
-          onToggleHistory={() => togglePanel("history")}
+          onToggleBookmarks={() => togglePanel('bookmarks')}
+          onToggleHistory={() => togglePanel('history')}
           onToggleDownloads={() => setDownloadsOpen((prev) => !prev)}
           onToggleSettings={openSettingsTab}
           downloadsDropdown={
@@ -255,30 +244,21 @@ export default function App() {
         <ProgressBar isLoading={isLoading} />
       </header>
 
-      <TabBar
-        tabs={tabs}
-        activeTabId={activeTabId}
-        onSwitch={setActiveTabId}
-        onClose={closeTab}
-      />
+      <TabBar tabs={tabs} activeTabId={activeTabId} onSwitch={setActiveTabId} onClose={closeTab} />
 
       <SidePanel
         id="bookmarks-panel"
         title="Favoriten"
-        isActive={activePanel === "bookmarks"}
+        isActive={activePanel === 'bookmarks'}
         onClose={closeAllPanels}
       >
-        <BookmarksPanel
-          bookmarks={bookmarks}
-          onNavigate={handleNavigateAndClose}
-          onDelete={removeBookmark}
-        />
+        <BookmarksPanel bookmarks={bookmarks} onNavigate={handleNavigateAndClose} onDelete={removeBookmark} />
       </SidePanel>
 
       <SidePanel
         id="history-panel"
         title="Verlauf"
-        isActive={activePanel === "history"}
+        isActive={activePanel === 'history'}
         onClose={closeAllPanels}
         headerExtra={
           <input
@@ -290,11 +270,7 @@ export default function App() {
           />
         }
       >
-        <HistoryPanel
-          entries={historyEntries}
-          onNavigate={handleNavigateAndClose}
-          onDelete={removeHistoryEntry}
-        />
+        <HistoryPanel entries={historyEntries} onNavigate={handleNavigateAndClose} onDelete={removeHistoryEntry} />
       </SidePanel>
 
       <BrowserView

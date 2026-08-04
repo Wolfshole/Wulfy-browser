@@ -1,32 +1,29 @@
-import { useCallback, useEffect, useState } from "react";
-import type { SearchEngine, ThemePreset } from "../electron.d";
-import { applyAccentColor } from "../utils/color";
+import { useCallback, useEffect, useState } from 'react';
+import type { SearchEngine, ThemePreset } from '../electron.d';
+import { applyAccentColor } from '../utils/color';
 
-function applyBackgroundImage(path: string) {
-  if (path) {
-    document.documentElement.style.setProperty(
-      "--toolbar-bg-image",
-      `url("file://${path}")`,
-    );
+function applyBackgroundImage(dataUrl: string) {
+  if (dataUrl) {
+    document.body.style.setProperty('--toolbar-bg-image', `url("${dataUrl}")`);
   } else {
-    document.documentElement.style.removeProperty("--toolbar-bg-image");
+    document.body.style.removeProperty('--toolbar-bg-image');
   }
 }
 
 export function useSettings() {
-  const [theme, setThemeState] = useState<"light" | "dark">("light");
+  const [theme, setThemeState] = useState<'light' | 'dark'>('light');
   const [searchEngines, setSearchEngines] = useState<SearchEngine[]>([]);
-  const [selectedEngineId, setSelectedEngineId] = useState("google");
+  const [selectedEngineId, setSelectedEngineId] = useState('google');
   const [restoreTabs, setRestoreTabsState] = useState(false);
-  const [accentColor, setAccentColorState] = useState("#0078d4");
-  const [backgroundImage, setBackgroundImageState] = useState("");
+  const [accentColor, setAccentColorState] = useState('#0078d4');
+  const [backgroundImage, setBackgroundImageState] = useState('');
   const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
 
   useEffect(() => {
     (async () => {
-      const t = (await window.electron.settings.getTheme()) as "light" | "dark";
+      const t = (await window.electron.settings.getTheme()) as 'light' | 'dark';
       setThemeState(t);
-      document.body.classList.toggle("dark-mode", t === "dark");
+      document.body.classList.toggle('dark-mode', t === 'dark');
 
       const engines = await window.electron.settings.getSearchEngines();
       setSearchEngines(engines || []);
@@ -52,9 +49,9 @@ export function useSettings() {
     })();
   }, []);
 
-  const setTheme = useCallback(async (next: "light" | "dark") => {
+  const setTheme = useCallback(async (next: 'light' | 'dark') => {
     setThemeState(next);
-    document.body.classList.toggle("dark-mode", next === "dark");
+    document.body.classList.toggle('dark-mode', next === 'dark');
     await window.electron.settings.setTheme(next);
   }, []);
 
@@ -92,8 +89,8 @@ export function useSettings() {
 
   const clearBackgroundImage = useCallback(async () => {
     await window.electron.settings.clearBackgroundImage();
-    setBackgroundImageState("");
-    applyBackgroundImage("");
+    setBackgroundImageState('');
+    applyBackgroundImage('');
   }, []);
 
   return {

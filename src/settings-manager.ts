@@ -12,6 +12,12 @@ export interface SavedTab {
   title: string;
 }
 
+export interface ThemePreset {
+  id: string;
+  name: string;
+  accentColor: string;
+}
+
 class SettingsManager {
   private store: Store;
   private defaultSearchEngines: SearchEngine[] = [
@@ -47,6 +53,17 @@ class SettingsManager {
     },
   ];
 
+  // Feste Preset-Themes (nur Akzentfarbe - Grundhelligkeit bleibt Hell/Dunkel).
+  // Nicht persistiert, dient nur als Auswahlliste für den Frontend-Farbwähler.
+  private themePresets: ThemePreset[] = [
+    { id: 'default-blue', name: 'Wulfy Blau', accentColor: '#0078d4' },
+    { id: 'gx-purple', name: 'GX Lila', accentColor: '#8e44ec' },
+    { id: 'crimson', name: 'Crimson', accentColor: '#e63950' },
+    { id: 'emerald', name: 'Smaragd', accentColor: '#1abc9c' },
+    { id: 'sunset', name: 'Sonnenuntergang', accentColor: '#ff7a45' },
+    { id: 'gold', name: 'Gold', accentColor: '#d4a017' },
+  ];
+
   constructor() {
     this.store = new Store({
       name: 'settings',
@@ -57,6 +74,8 @@ class SettingsManager {
         searchEngines: this.defaultSearchEngines,
         restoreTabs: false,
         savedTabs: [],
+        accentColor: '',
+        backgroundImage: '',
       },
     });
   }
@@ -159,6 +178,52 @@ class SettingsManager {
 
   setSavedTabs(tabs: SavedTab[]): void {
     this.store.set('savedTabs', tabs);
+  }
+
+  /**
+   * Akzentfarbe abrufen (leerer String = Standardfarbe aus dem CSS)
+   */
+  getAccentColor(): string {
+    return this.store.get('accentColor', '') as string;
+  }
+
+  /**
+   * Akzentfarbe setzen (Hex-Code, z.B. "#8e44ec"), oder "" um zurückzusetzen
+   */
+  setAccentColor(color: string): void {
+    this.store.set('accentColor', color);
+  }
+
+  /**
+   * Verfügbare Preset-Themes abrufen
+   */
+  getThemePresets(): ThemePreset[] {
+    return this.themePresets;
+  }
+
+  /**
+   * Preset anwenden: setzt die Akzentfarbe auf den Preset-Wert
+   */
+  applyThemePreset(presetId: string): ThemePreset | undefined {
+    const preset = this.themePresets.find(p => p.id === presetId);
+    if (preset) {
+      this.store.set('accentColor', preset.accentColor);
+    }
+    return preset;
+  }
+
+  /**
+   * Pfad zum Hintergrundbild abrufen (leerer String = kein Hintergrundbild)
+   */
+  getBackgroundImage(): string {
+    return this.store.get('backgroundImage', '') as string;
+  }
+
+  /**
+   * Pfad zum Hintergrundbild setzen, oder "" um zu entfernen
+   */
+  setBackgroundImage(path: string): void {
+    this.store.set('backgroundImage', path);
   }
 
   /**
