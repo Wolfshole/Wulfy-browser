@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { SearchEngine, ThemePreset } from '../electron.d';
-import { applyAccentColor } from '../utils/color';
+import type { SearchEngine, ThemePreset, WallpaperPreset } from '../electron.d';
+import { applyAccentColor, withDarkOverlay } from '../utils/color';
 
-function applyBackgroundImage(dataUrl: string) {
-  if (dataUrl) {
-    document.body.style.setProperty('--toolbar-bg-image', `url("${dataUrl}")`);
+// --toolbar-bg-image erwartet einen fertigen CSS background-image Wert
+// (entweder ein Gradient wie bei Presets, oder ein url("...") wie bei
+// eigenen Bildern). withDarkOverlay dämpft das Bild zentral an dieser einen
+// Stelle, damit Text in Toolbar/Panels/internen Seiten überall lesbar bleibt.
+function applyBackgroundCss(cssValue: string) {
+  if (cssValue) {
+    document.body.style.setProperty('--toolbar-bg-image', withDarkOverlay(cssValue));
   } else {
     document.body.style.removeProperty('--toolbar-bg-image');
   }
@@ -16,8 +20,11 @@ export function useSettings() {
   const [selectedEngineId, setSelectedEngineId] = useState('google');
   const [restoreTabs, setRestoreTabsState] = useState(false);
   const [accentColor, setAccentColorState] = useState('#0078d4');
-  const [backgroundImage, setBackgroundImageState] = useState('');
   const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
+
+  const [backgroundImage, setBackgroundImageState] = useState(''); // rohe Data-URL, für <img>-Vorschau
+  const [wallpaperPresets, setWallpaperPresets] = useState<WallpaperPreset[]>([]);
+  const [activeWallpaperPresetId, setActiveWallpaperPresetId] = useState('');
 
   useEffect(() => {
     (async () => {
@@ -40,12 +47,26 @@ export function useSettings() {
         applyAccentColor(color);
       }
 
-      const bgImage = await window.electron.settings.getBackgroundImage();
-      setBackgroundImageState(bgImage);
-      applyBackgroundImage(bgImage);
-
       const presets = await window.electron.settings.getThemePresets();
       setThemePresets(presets || []);
+
+      const wallpapers = await window.electron.settings.getWallpaperPresets();
+      setWallpaperPresets(wallpapers || []);
+
+      // Preset und eigenes Bild schließen sich aus - Preset hat Vorrang,
+      // falls beide (fälschlich) gesetzt wären.
+      const presetId = await window.electron.settings.getBackgroundPresetId();
+      if (presetId) {
+        const preset = (wallpapers || []).find(p => p.id === presetId);
+        if (preset) {
+          setActiveWallpaperPresetId(presetId);
+          applyBackgroundCss(preset.css);
+        }
+      } else {
+        const bgImage = await window.electron.settings.getBackgroundImage();
+        setBackgroundImageState(bgImage);
+        if (bgImage) applyBackgroundCss(`url("${bgImage}")`);
+      }
     })();
   }, []);
 
@@ -80,17 +101,28 @@ export function useSettings() {
   }, []);
 
   const chooseBackgroundImage = useCallback(async () => {
-    const path = await window.electron.settings.chooseBackgroundImage();
-    if (path) {
-      setBackgroundImageState(path);
-      applyBackgroundImage(path);
+    const dataUrl = await window.electron.settings.chooseBackgroundImage();
+    if (dataUrl) {
+      setBackgroundImageState(dataUrl);
+      setActiveWallpaperPresetId('');
+      applyBackgroundCss(`url("${dataUrl}")`);
     }
   }, []);
 
   const clearBackgroundImage = useCallback(async () => {
     await window.electron.settings.clearBackgroundImage();
     setBackgroundImageState('');
-    applyBackgroundImage('');
+    setActiveWallpaperPresetId('');
+    applyBackgroundCss('');
+  }, []);
+
+  const applyWallpaperPreset = useCallback(async (presetId: string) => {
+    const preset = await window.electron.settings.setBackgroundPreset(presetId);
+    if (preset) {
+      setActiveWallpaperPresetId(presetId);
+      setBackgroundImageState('');
+      applyBackgroundCss(preset.css);
+    }
   }, []);
 
   return {
@@ -108,5 +140,8 @@ export function useSettings() {
     backgroundImage,
     chooseBackgroundImage,
     clearBackgroundImage,
+    wallpaperPresets,
+    activeWallpaperPresetId,
+    applyWallpaperPreset,
   };
 }

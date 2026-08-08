@@ -7,6 +7,7 @@ import downloadsManager from "./downloads-manager";
 import { registerDownloadHandler } from "./download-handler";
 import settingsManager from "./settings-manager";
 import aiManager from "./ai-manager";
+import { registerAdBlocker, setAdBlockEnabled, getBlockedCount } from "./ad-blocker";
 
 let mainWindow: BrowserWindow;
 
@@ -31,6 +32,8 @@ function getImageDataUrl(filePath: string): string {
 }
 
 const createWindow = () => {
+  registerAdBlocker();
+
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -367,6 +370,19 @@ ipcMain.handle("settings:getRestoreTabs", async () => {
   return settingsManager.getRestoreTabs();
 });
 
+ipcMain.handle("settings:getAdBlockEnabled", async () => {
+  return settingsManager.getAdBlockEnabled();
+});
+
+ipcMain.handle("settings:setAdBlockEnabled", async (_evt, enabled: boolean) => {
+  setAdBlockEnabled(enabled);
+  return true;
+});
+
+ipcMain.handle("adblock:getBlockedCount", async () => {
+  return getBlockedCount();
+});
+
 ipcMain.handle("settings:getAccentColor", async () => {
   return settingsManager.getAccentColor();
 });
@@ -405,6 +421,18 @@ ipcMain.handle("settings:chooseBackgroundImage", async () => {
 ipcMain.handle("settings:clearBackgroundImage", async () => {
   settingsManager.setBackgroundImage("");
   return true;
+});
+
+ipcMain.handle("settings:getWallpaperPresets", async () => {
+  return settingsManager.getWallpaperPresets();
+});
+
+ipcMain.handle("settings:getBackgroundPresetId", async () => {
+  return settingsManager.getBackgroundPresetId();
+});
+
+ipcMain.handle("settings:setBackgroundPreset", async (_evt, presetId: string) => {
+  return settingsManager.setBackgroundPreset(presetId);
 });
 
 ipcMain.handle("settings:setRestoreTabs", async (_evt, enabled: boolean) => {

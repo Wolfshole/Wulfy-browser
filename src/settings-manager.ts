@@ -18,6 +18,18 @@ export interface ThemePreset {
   accentColor: string;
 }
 
+export interface WallpaperPreset {
+  id: string;
+  name: string;
+  css: string; // gültiger CSS background-image Wert (Gradient)
+}
+
+export interface WallpaperPreset {
+  id: string;
+  name: string;
+  css: string; // fertiger CSS-Wert für background-image, z.B. ein Gradient
+}
+
 class SettingsManager {
   private store: Store;
   private defaultSearchEngines: SearchEngine[] = [
@@ -64,6 +76,21 @@ class SettingsManager {
     { id: 'gold', name: 'Gold', accentColor: '#d4a017' },
   ];
 
+  // Vorinstallierte Wallpaper (reine CSS-Gradienten, keine Bilddateien nötig).
+  private wallpaperPresets: WallpaperPreset[] = [
+    { id: 'gx-purple-haze', name: 'Purple Haze', css: 'linear-gradient(135deg, #2d1b4e 0%, #8e44ec 100%)' },
+    { id: 'sunset-glow', name: 'Sonnenuntergang', css: 'linear-gradient(135deg, #ff7a45 0%, #e63950 100%)' },
+    { id: 'ocean-deep', name: 'Tiefsee', css: 'linear-gradient(135deg, #0f2027 0%, #2c5364 100%)' },
+    { id: 'emerald-forest', name: 'Smaragdwald', css: 'linear-gradient(135deg, #134e5e 0%, #1abc9c 100%)' },
+    { id: 'midnight', name: 'Mitternacht', css: 'linear-gradient(135deg, #000000 0%, #232526 100%)' },
+    { id: 'gold-rush', name: 'Goldrausch', css: 'linear-gradient(135deg, #d4a017 0%, #f6d365 100%)' },
+    {
+      id: 'aurora',
+      name: 'Aurora',
+      css: 'linear-gradient(135deg, #00c6ff 0%, #8e44ec 50%, #ff00cc 100%)',
+    },
+  ];
+
   constructor() {
     this.store = new Store({
       name: 'settings',
@@ -76,6 +103,8 @@ class SettingsManager {
         savedTabs: [],
         accentColor: '',
         backgroundImage: '',
+        backgroundPresetId: '',
+        adBlockEnabled: true,
       },
     });
   }
@@ -213,17 +242,47 @@ class SettingsManager {
   }
 
   /**
-   * Pfad zum Hintergrundbild abrufen (leerer String = kein Hintergrundbild)
+   * Pfad zum Hintergrundbild abrufen (leerer String = kein eigenes Hintergrundbild)
    */
   getBackgroundImage(): string {
     return this.store.get('backgroundImage', '') as string;
   }
 
   /**
-   * Pfad zum Hintergrundbild setzen, oder "" um zu entfernen
+   * Pfad zum Hintergrundbild setzen, oder "" um zu entfernen.
+   * Ein eigenes Bild und ein Preset-Wallpaper schließen sich gegenseitig aus,
+   * daher wird hier immer ein aktives Preset zurückgesetzt.
    */
   setBackgroundImage(path: string): void {
     this.store.set('backgroundImage', path);
+    this.store.set('backgroundPresetId', '');
+  }
+
+  /**
+   * Verfügbare vorinstallierte Wallpaper abrufen
+   */
+  getWallpaperPresets(): WallpaperPreset[] {
+    return this.wallpaperPresets;
+  }
+
+  /**
+   * Aktuell aktives Wallpaper-Preset (leer = keins aktiv / eigenes Bild aktiv)
+   */
+  getBackgroundPresetId(): string {
+    return this.store.get('backgroundPresetId', '') as string;
+  }
+
+  /**
+   * Wallpaper-Preset anwenden. Setzt gleichzeitig ein eventuell aktives
+   * eigenes Hintergrundbild zurück (exklusiv).
+   */
+  setBackgroundPreset(presetId: string): WallpaperPreset | undefined {
+    const preset = this.wallpaperPresets.find(p => p.id === presetId);
+    if (preset) {
+      this.store.set('backgroundPresetId', presetId);
+      this.store.set('backgroundImage', '');
+    }
+    return preset;
   }
 
   /**
@@ -243,6 +302,20 @@ class SettingsManager {
    */
   setAIConfig(config: any): void {
     this.store.set('aiConfig', config);
+  }
+
+  /**
+   * Werbeblocker-Status abrufen
+   */
+  getAdBlockEnabled(): boolean {
+    return this.store.get('adBlockEnabled', true) as boolean;
+  }
+
+  /**
+   * Werbeblocker aktivieren/deaktivieren
+   */
+  setAdBlockEnabled(enabled: boolean): void {
+    this.store.set('adBlockEnabled', enabled);
   }
 }
 

@@ -7,13 +7,7 @@ export interface DownloadRecord {
   downloadedAt: number;
   mimeType?: string;
   progress: number;
-  status:
-    | "pending"
-    | "progressing"
-    | "paused"
-    | "completed"
-    | "interrupted"
-    | "cancelled";
+  status: 'pending' | 'progressing' | 'paused' | 'completed' | 'interrupted' | 'cancelled';
   receivedBytes?: number;
   totalBytes?: number;
   speedBytesPerSec?: number;
@@ -36,6 +30,12 @@ export interface ThemePreset {
   id: string;
   name: string;
   accentColor: string;
+}
+
+export interface WallpaperPreset {
+  id: string;
+  name: string;
+  css: string;
 }
 
 export interface ElectronAPI {
@@ -66,12 +66,7 @@ export interface ElectronAPI {
     import: (entries: any) => Promise<any>;
   };
   downloads: {
-    add: (
-      fileName: string,
-      url: string,
-      fileSize?: number,
-      mimeType?: string,
-    ) => Promise<boolean>;
+    add: (fileName: string, url: string, fileSize?: number, mimeType?: string) => Promise<boolean>;
     get: () => Promise<DownloadRecord[]>;
     delete: (downloadId: string) => Promise<boolean>;
     clear: () => Promise<void>;
@@ -98,20 +93,18 @@ export interface ElectronAPI {
     setDefaultSearchEngine: (engineId: string) => Promise<boolean>;
     getSearchEngines: () => Promise<SearchEngine[]>;
     getSearchEngineById: (id: string) => Promise<SearchEngine>;
-    addCustomSearchEngine: (
-      name: string,
-      url: string,
-      icon?: string,
-    ) => Promise<any>;
+    addCustomSearchEngine: (name: string, url: string, icon?: string) => Promise<any>;
     deleteSearchEngine: (engineId: string) => Promise<boolean>;
     getHomepage: () => Promise<string>;
     setHomepage: (url: string) => Promise<boolean>;
-    getTheme: () => Promise<"light" | "dark">;
+    getTheme: () => Promise<'light' | 'dark'>;
     setTheme: (theme: string) => Promise<boolean>;
     getAIConfig: () => Promise<any>;
     setAIConfig: (config: any) => Promise<boolean>;
     // Für Tab-Wiederherstellung — muss noch in settings-manager.ts ergänzt werden:
     getRestoreTabs: () => Promise<boolean>;
+    getAdBlockEnabled: () => Promise<boolean>;
+    setAdBlockEnabled: (enabled: boolean) => Promise<boolean>;
     setRestoreTabs: (enabled: boolean) => Promise<void>;
     getSavedTabs: () => Promise<SavedTab[]>;
     setSavedTabs: (tabs: SavedTab[]) => Promise<void>;
@@ -122,6 +115,9 @@ export interface ElectronAPI {
     getBackgroundImage: () => Promise<string>;
     chooseBackgroundImage: () => Promise<string | null>;
     clearBackgroundImage: () => Promise<boolean>;
+    getWallpaperPresets: () => Promise<WallpaperPreset[]>;
+    getBackgroundPresetId: () => Promise<string>;
+    setBackgroundPreset: (presetId: string) => Promise<WallpaperPreset | undefined>;
     getAccentColor: () => Promise<string>;
     setAccentColor: (color: string) => Promise<void>;
   };
@@ -132,6 +128,9 @@ export interface ElectronAPI {
     clearHistory: () => Promise<any>;
     addKnowledge: (entry: string) => Promise<void>;
   };
+  adblock: {
+    getBlockedCount: () => Promise<number>;
+  };
 }
 
 declare global {
@@ -141,10 +140,7 @@ declare global {
 
   namespace JSX {
     interface IntrinsicElements {
-      webview: React.DetailedHTMLProps<
-        React.HTMLAttributes<HTMLElement>,
-        HTMLElement
-      > & {
+      webview: React.DetailedHTMLProps<React.HTMLAttributes<HTMLElement>, HTMLElement> & {
         src?: string;
         allowpopups?: string;
         ref?: React.Ref<any>;

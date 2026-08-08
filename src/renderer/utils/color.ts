@@ -16,6 +16,19 @@ export function shadeColor(hex: string, percent: number): string {
 }
 
 /**
+ * Legt eine feste, dezente Abdunkelung über einen CSS background-image Wert
+ * (Gradient oder url(...)). Wird an einer zentralen Stelle angewendet, bevor
+ * --toolbar-bg-image gesetzt wird, damit das Wallpaper überall im Browser
+ * (Toolbar, Tab-Leiste, Panels, interne Seiten) gedämpft und der Text darüber
+ * lesbar bleibt - unabhängig davon, ob der jeweilige Bereich noch eine eigene
+ * Karten-Fläche hat oder nicht.
+ */
+export function withDarkOverlay(cssImage: string): string {
+  if (!cssImage) return cssImage;
+  return `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), ${cssImage}`;
+}
+
+/**
  * Wendet die Akzentfarbe als CSS-Variablen an (--accent-color, --accent-hover,
  * --accent-active). Wird sowohl beim App-Start als auch bei Live-Änderung
  * in den Einstellungen aufgerufen.

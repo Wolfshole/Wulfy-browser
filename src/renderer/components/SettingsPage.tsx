@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
 import { useSettings } from '../hooks/useSettings';
 import { useAIConfig } from '../hooks/useAIConfig';
+import { useAdBlock } from '../hooks/useAdBlock';
 
-type Category = 'general' | 'search' | 'tabs' | 'ai';
+type Category = 'general' | 'search' | 'tabs' | 'privacy' | 'ai';
 
 const CATEGORIES: { id: Category; label: string; icon: string }[] = [
   { id: 'general', label: 'Design', icon: '🎨' },
   { id: 'search', label: 'Suchmaschine', icon: '🔍' },
   { id: 'tabs', label: 'Tabs', icon: '🗂️' },
+  { id: 'privacy', label: 'Privatsphäre', icon: '🛡️' },
   { id: 'ai', label: 'KI-Assistent', icon: '🤖' },
 ];
 
@@ -27,9 +29,13 @@ export default function SettingsPage() {
     backgroundImage,
     chooseBackgroundImage,
     clearBackgroundImage,
+    wallpaperPresets,
+    activeWallpaperPresetId,
+    applyWallpaperPreset,
   } = useSettings();
 
   const { config: aiConfig, save: saveAIConfig } = useAIConfig();
+  const { enabled: adBlockEnabled, setEnabled: setAdBlockEnabled, blockedCount } = useAdBlock();
   const [aiConfigOpen, setAIConfigOpen] = useState(false);
   const [aiConfigDraft, setAIConfigDraft] = useState(aiConfig);
 
@@ -110,6 +116,29 @@ export default function SettingsPage() {
             <p className="settings-page-hint">
               Legt ein Bild hinter Toolbar und Tab-Leiste, ähnlich wie bei Opera GX.
             </p>
+
+            <p className="settings-page-hint" style={{ marginBottom: 8, fontWeight: 600 }}>
+              Vorinstallierte Wallpaper
+            </p>
+            <div className="wallpaper-preset-grid">
+              {wallpaperPresets.map((preset) => (
+                <button
+                  key={preset.id}
+                  className={`wallpaper-preset-swatch${
+                    activeWallpaperPresetId === preset.id ? ' active' : ''
+                  }`}
+                  style={{ backgroundImage: preset.css }}
+                  onClick={() => applyWallpaperPreset(preset.id)}
+                  title={preset.name}
+                >
+                  <span className="wallpaper-preset-label">{preset.name}</span>
+                </button>
+              ))}
+            </div>
+
+            <p className="settings-page-hint" style={{ marginTop: 20, marginBottom: 8, fontWeight: 600 }}>
+              Eigenes Bild
+            </p>
             {backgroundImage ? (
               <div className="background-image-preview-row">
                 <img src={backgroundImage} alt="Hintergrundbild" className="background-image-preview" />
@@ -162,6 +191,28 @@ export default function SettingsPage() {
               />
               Beim Start zuletzt geöffnete Tabs wiederherstellen
             </label>
+          </section>
+        )}
+
+        {category === 'privacy' && (
+          <section className="settings-page-section">
+            <h3>Privatsphäre</h3>
+            <p className="settings-page-hint">
+              Blockiert Anfragen an bekannte Werbe- und Tracking-Server, bevor sie geladen werden.
+            </p>
+            <label className="settings-checkbox">
+              <input
+                type="checkbox"
+                checked={adBlockEnabled}
+                onChange={(e) => setAdBlockEnabled(e.target.checked)}
+              />
+              Werbeblocker aktivieren
+            </label>
+            <p className="adblock-count">
+              {blockedCount === 0
+                ? 'Noch keine Anfragen blockiert.'
+                : `${blockedCount.toLocaleString('de-DE')} Anfragen seit dem Start blockiert.`}
+            </p>
           </section>
         )}
 

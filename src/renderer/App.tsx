@@ -11,7 +11,7 @@ import { useBrowserTabs } from './hooks/useBrowserTabs';
 import { useBookmarks } from './hooks/useBookmarks';
 import { useHistory } from './hooks/useHistory';
 import { useDownloads } from './hooks/useDownloads';
-import { applyAccentColor } from './utils/color';
+import { applyAccentColor, withDarkOverlay } from './utils/color';
 
 type PanelName = 'bookmarks' | 'history' | null;
 
@@ -81,9 +81,16 @@ export default function App() {
       const savedAccent = await window.electron.settings.getAccentColor();
       if (savedAccent) applyAccentColor(savedAccent);
 
-      const savedBgImage = await window.electron.settings.getBackgroundImage();
-      if (savedBgImage) {
-        document.body.style.setProperty('--toolbar-bg-image', `url("${savedBgImage}")`);
+      const presetId = await window.electron.settings.getBackgroundPresetId();
+      if (presetId) {
+        const wallpapers = await window.electron.settings.getWallpaperPresets();
+        const preset = (wallpapers || []).find((p) => p.id === presetId);
+        if (preset) document.body.style.setProperty('--toolbar-bg-image', withDarkOverlay(preset.css));
+      } else {
+        const savedBgImage = await window.electron.settings.getBackgroundImage();
+        if (savedBgImage) {
+          document.body.style.setProperty('--toolbar-bg-image', withDarkOverlay(`url("${savedBgImage}")`));
+        }
       }
     })();
   }, []);
