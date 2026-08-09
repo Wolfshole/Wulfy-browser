@@ -3,6 +3,7 @@ import { useSettings } from '../hooks/useSettings';
 import { useAIConfig } from '../hooks/useAIConfig';
 import { useAdBlock } from '../hooks/useAdBlock';
 import DomainListEditor from './DomainListEditor';
+import ToggleSwitch from './ToggleSwitch';
 
 type Category = 'general' | 'search' | 'tabs' | 'privacy' | 'ai';
 
@@ -207,14 +208,11 @@ export default function SettingsPage() {
         {category === 'tabs' && (
           <section className="settings-page-section">
             <h3>Tabs</h3>
-            <label className="settings-checkbox">
-              <input
-                type="checkbox"
-                checked={restoreTabs}
-                onChange={(e) => setRestoreTabs(e.target.checked)}
-              />
-              Beim Start zuletzt geöffnete Tabs wiederherstellen
-            </label>
+            <ToggleSwitch
+              checked={restoreTabs}
+              onChange={setRestoreTabs}
+              label="Beim Start zuletzt geöffnete Tabs wiederherstellen"
+            />
           </section>
         )}
 
@@ -222,34 +220,21 @@ export default function SettingsPage() {
           <section className="settings-page-section">
             <h3>Privatsphäre</h3>
 
-            <label className="settings-checkbox">
-              <input
-                type="checkbox"
-                checked={adBlockEnabled}
-                onChange={(e) => setAdBlockEnabled(e.target.checked)}
-              />
-              Werbeblocker aktivieren
-            </label>
+            <ToggleSwitch checked={adBlockEnabled} onChange={setAdBlockEnabled} label="Werbeblocker aktivieren" />
             <p className="settings-page-hint">Blockiert Anfragen an bekannte Werbe-Netzwerke.</p>
 
-            <label className="settings-checkbox">
-              <input
-                type="checkbox"
-                checked={trackerBlockEnabled}
-                onChange={(e) => setTrackerBlockEnabled(e.target.checked)}
-              />
-              Tracker-Blocker aktivieren
-            </label>
+            <ToggleSwitch
+              checked={trackerBlockEnabled}
+              onChange={setTrackerBlockEnabled}
+              label="Tracker-Blocker aktivieren"
+            />
             <p className="settings-page-hint">Blockiert Analytics- und Tracking-Skripte.</p>
 
-            <label className="settings-checkbox">
-              <input
-                type="checkbox"
-                checked={cosmeticFiltersEnabled}
-                onChange={(e) => setCosmeticFiltersEnabled(e.target.checked)}
-              />
-              Kosmetische Filter aktivieren
-            </label>
+            <ToggleSwitch
+              checked={cosmeticFiltersEnabled}
+              onChange={setCosmeticFiltersEnabled}
+              label="Kosmetische Filter aktivieren"
+            />
             <p className="settings-page-hint">
               Blendet übrig gebliebene (leere) Werbeflächen per CSS aus, auch wenn das Skript selbst
               nicht blockiert wurde.
@@ -286,15 +271,12 @@ export default function SettingsPage() {
               console.cloud.google.com → API "Safe Browsing API" aktivieren → Anmeldedaten → API-Schlüssel.
             </p>
 
-            <label className="settings-checkbox">
-              <input
-                type="checkbox"
-                checked={malwareBlockEnabled}
-                onChange={(e) => setMalwareBlockEnabled(e.target.checked)}
-                disabled={!safeBrowsingApiKey}
-              />
-              Malware-/Phishing-Schutz aktivieren{!safeBrowsingApiKey && ' (API-Key erforderlich)'}
-            </label>
+            <ToggleSwitch
+              checked={malwareBlockEnabled}
+              onChange={setMalwareBlockEnabled}
+              disabled={!safeBrowsingApiKey}
+              label={`Malware-/Phishing-Schutz aktivieren${!safeBrowsingApiKey ? ' (API-Key erforderlich)' : ''}`}
+            />
 
             <div className="ai-config-form" style={{ marginTop: 12 }}>
               <label>
