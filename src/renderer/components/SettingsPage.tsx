@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSettings } from '../hooks/useSettings';
 import { useAIConfig } from '../hooks/useAIConfig';
 import { useAdBlock } from '../hooks/useAdBlock';
+import DomainListEditor from './DomainListEditor';
 
 type Category = 'general' | 'search' | 'tabs' | 'privacy' | 'ai';
 
@@ -35,13 +36,36 @@ export default function SettingsPage() {
   } = useSettings();
 
   const { config: aiConfig, save: saveAIConfig } = useAIConfig();
-  const { enabled: adBlockEnabled, setEnabled: setAdBlockEnabled, blockedCount } = useAdBlock();
+  const {
+    adBlockEnabled,
+    setAdBlockEnabled,
+    trackerBlockEnabled,
+    setTrackerBlockEnabled,
+    cosmeticFiltersEnabled,
+    setCosmeticFiltersEnabled,
+    malwareBlockEnabled,
+    setMalwareBlockEnabled,
+    safeBrowsingApiKey,
+    setSafeBrowsingApiKey,
+    stats,
+    whitelist,
+    addWhitelistEntry,
+    removeWhitelistEntry,
+    blacklist,
+    addBlacklistEntry,
+    removeBlacklistEntry,
+  } = useAdBlock();
+  const [apiKeyDraft, setApiKeyDraft] = useState(safeBrowsingApiKey);
   const [aiConfigOpen, setAIConfigOpen] = useState(false);
   const [aiConfigDraft, setAIConfigDraft] = useState(aiConfig);
 
   useEffect(() => {
     setAIConfigDraft(aiConfig);
   }, [aiConfig]);
+
+  useEffect(() => {
+    setApiKeyDraft(safeBrowsingApiKey);
+  }, [safeBrowsingApiKey]);
 
   const [category, setCategory] = useState<Category>('general');
 
@@ -197,9 +221,7 @@ export default function SettingsPage() {
         {category === 'privacy' && (
           <section className="settings-page-section">
             <h3>Privatsphäre</h3>
-            <p className="settings-page-hint">
-              Blockiert Anfragen an bekannte Werbe- und Tracking-Server, bevor sie geladen werden.
-            </p>
+
             <label className="settings-checkbox">
               <input
                 type="checkbox"
@@ -208,11 +230,92 @@ export default function SettingsPage() {
               />
               Werbeblocker aktivieren
             </label>
-            <p className="adblock-count">
-              {blockedCount === 0
-                ? 'Noch keine Anfragen blockiert.'
-                : `${blockedCount.toLocaleString('de-DE')} Anfragen seit dem Start blockiert.`}
+            <p className="settings-page-hint">Blockiert Anfragen an bekannte Werbe-Netzwerke.</p>
+
+            <label className="settings-checkbox">
+              <input
+                type="checkbox"
+                checked={trackerBlockEnabled}
+                onChange={(e) => setTrackerBlockEnabled(e.target.checked)}
+              />
+              Tracker-Blocker aktivieren
+            </label>
+            <p className="settings-page-hint">Blockiert Analytics- und Tracking-Skripte.</p>
+
+            <label className="settings-checkbox">
+              <input
+                type="checkbox"
+                checked={cosmeticFiltersEnabled}
+                onChange={(e) => setCosmeticFiltersEnabled(e.target.checked)}
+              />
+              Kosmetische Filter aktivieren
+            </label>
+            <p className="settings-page-hint">
+              Blendet übrig gebliebene (leere) Werbeflächen per CSS aus, auch wenn das Skript selbst
+              nicht blockiert wurde.
             </p>
+
+            <p className="adblock-count">
+              {stats.ads.toLocaleString('de-DE')} Werbe- und {stats.trackers.toLocaleString('de-DE')}{' '}
+              Tracking-Anfragen seit dem Start blockiert.
+            </p>
+
+            <DomainListEditor
+              title="Ausnahmen (Whitelist)"
+              hint="Diese Domains werden nie blockiert, auch nicht bei Treffern in den eingebauten Listen oder der Blacklist."
+              placeholder="z. B. beispiel.de"
+              entries={whitelist}
+              onAdd={addWhitelistEntry}
+              onRemove={removeWhitelistEntry}
+            />
+
+            <DomainListEditor
+              title="Zusätzlich blockieren (Blacklist)"
+              hint="Diese Domains werden immer blockiert, unabhängig von den Schaltern oben."
+              placeholder="z. B. nervige-domain.de"
+              entries={blacklist}
+              onAdd={addBlacklistEntry}
+              onRemove={removeBlacklistEntry}
+            />
+
+            <h3 style={{ marginTop: 28 }}>Malware- &amp; Phishing-Schutz</h3>
+            <p className="settings-page-hint">
+              Nutzt Google Safe Browsing, um Seiten vor dem Laden zu prüfen. Dafür brauchst du einen
+              eigenen, kostenlosen API-Key von Google - eine feste Liste "böser" Domains wäre nach
+              wenigen Wochen veraltet und würde nur falsche Sicherheit vortäuschen. Key erstellen unter:
+              console.cloud.google.com → API "Safe Browsing API" aktivieren → Anmeldedaten → API-Schlüssel.
+            </p>
+
+            <label className="settings-checkbox">
+              <input
+                type="checkbox"
+                checked={malwareBlockEnabled}
+                onChange={(e) => setMalwareBlockEnabled(e.target.checked)}
+                disabled={!safeBrowsingApiKey}
+              />
+              Malware-/Phishing-Schutz aktivieren{!safeBrowsingApiKey && ' (API-Key erforderlich)'}
+            </label>
+
+            <div className="ai-config-form" style={{ marginTop: 12 }}>
+              <label>
+                Google Safe Browsing API-Key
+                <input
+                  type="password"
+                  value={apiKeyDraft}
+                  onChange={(e) => setApiKeyDraft(e.target.value)}
+                  placeholder="AIza..."
+                />
+              </label>
+              <button className="settings-btn" onClick={() => setSafeBrowsingApiKey(apiKeyDraft)}>
+                Speichern
+              </button>
+            </div>
+
+            {stats.malware > 0 && (
+              <p className="adblock-count">
+                {stats.malware.toLocaleString('de-DE')} gefährliche Seiten blockiert.
+              </p>
+            )}
           </section>
         )}
 

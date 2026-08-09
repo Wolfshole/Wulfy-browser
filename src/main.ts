@@ -7,7 +7,26 @@ import downloadsManager from "./downloads-manager";
 import { registerDownloadHandler } from "./download-handler";
 import settingsManager from "./settings-manager";
 import aiManager from "./ai-manager";
-import { registerAdBlocker, setAdBlockEnabled, getBlockedCount } from "./ad-blocker";
+import {
+  registerAdBlocker,
+  setAdBlockEnabled,
+  setTrackerBlockEnabled,
+  setCosmeticFiltersEnabled,
+  isCosmeticFiltersEnabled,
+  setMalwareBlockEnabled,
+  isMalwareBlockEnabled,
+  getBlockedStats,
+  getWhitelist,
+  addToWhitelist,
+  removeFromWhitelist,
+  getBlacklist,
+  addToBlacklist,
+  removeFromBlacklist,
+  checkUrlSafety,
+  recordMalwareBlock,
+  getWarningPageHtml,
+  COSMETIC_CSS,
+} from "./ad-blocker";
 
 let mainWindow: BrowserWindow;
 
@@ -71,6 +90,28 @@ app.on("ready", createWindow);
 // web-contents-created feuert auch für Webview-Guests, nicht nur das Hauptfenster.
 app.on("web-contents-created", (_event, contents) => {
   if (contents.getType() !== "webview") return;
+
+  // Kosmetische Filter: Werbe-Container per CSS ausblenden, sobald die Seite
+  // im DOM steht - läuft bei jeder Navigation neu, da insertCSS nicht persistiert.
+  contents.on("dom-ready", () => {
+    if (isCosmeticFiltersEnabled()) {
+      contents.insertCSS(COSMETIC_CSS).catch(() => {
+        // Seite evtl. schon entladen o.ä. - unkritisch
+      });
+    }
+  });
+
+  // Malware/Phishing-Check bei Hauptframe-Navigation (nur wenn API-Key hinterlegt,
+  // siehe checkUrlSafety in ad-blocker.ts).
+  contents.on("will-navigate", async (event, url) => {
+    if (!isMalwareBlockEnabled()) return;
+    const isDangerous = await checkUrlSafety(url);
+    if (isDangerous) {
+      event.preventDefault();
+      recordMalwareBlock();
+      contents.loadURL(`data:text/html,${encodeURIComponent(getWarningPageHtml(url))}`);
+    }
+  });
 
   contents.on("context-menu", (_e, params) => {
     const menu = new Menu();
@@ -379,8 +420,68 @@ ipcMain.handle("settings:setAdBlockEnabled", async (_evt, enabled: boolean) => {
   return true;
 });
 
-ipcMain.handle("adblock:getBlockedCount", async () => {
-  return getBlockedCount();
+ipcMain.handle("settings:getTrackerBlockEnabled", async () => {
+  return settingsManager.getTrackerBlockEnabled();
+});
+
+ipcMain.handle("settings:setTrackerBlockEnabled", async (_evt, enabled: boolean) => {
+  setTrackerBlockEnabled(enabled);
+  return true;
+});
+
+ipcMain.handle("settings:getCosmeticFiltersEnabled", async () => {
+  return settingsManager.getCosmeticFiltersEnabled();
+});
+
+ipcMain.handle("settings:setCosmeticFiltersEnabled", async (_evt, enabled: boolean) => {
+  setCosmeticFiltersEnabled(enabled);
+  return true;
+});
+
+ipcMain.handle("settings:getMalwareBlockEnabled", async () => {
+  return settingsManager.getMalwareBlockEnabled();
+});
+
+ipcMain.handle("settings:setMalwareBlockEnabled", async (_evt, enabled: boolean) => {
+  setMalwareBlockEnabled(enabled);
+  return true;
+});
+
+ipcMain.handle("settings:getSafeBrowsingApiKey", async () => {
+  return settingsManager.getSafeBrowsingApiKey();
+});
+
+ipcMain.handle("settings:setSafeBrowsingApiKey", async (_evt, key: string) => {
+  settingsManager.setSafeBrowsingApiKey(key);
+  return true;
+});
+
+ipcMain.handle("adblock:getBlockedStats", async () => {
+  return getBlockedStats();
+});
+
+ipcMain.handle("adblock:getWhitelist", async () => {
+  return getWhitelist();
+});
+
+ipcMain.handle("adblock:addToWhitelist", async (_evt, domain: string) => {
+  return addToWhitelist(domain);
+});
+
+ipcMain.handle("adblock:removeFromWhitelist", async (_evt, domain: string) => {
+  return removeFromWhitelist(domain);
+});
+
+ipcMain.handle("adblock:getBlacklist", async () => {
+  return getBlacklist();
+});
+
+ipcMain.handle("adblock:addToBlacklist", async (_evt, domain: string) => {
+  return addToBlacklist(domain);
+});
+
+ipcMain.handle("adblock:removeFromBlacklist", async (_evt, domain: string) => {
+  return removeFromBlacklist(domain);
 });
 
 ipcMain.handle("settings:getAccentColor", async () => {

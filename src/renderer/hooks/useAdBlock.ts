@@ -1,30 +1,98 @@
 import { useCallback, useEffect, useState } from 'react';
 
 export function useAdBlock() {
-  const [enabled, setEnabledState] = useState(true);
-  const [blockedCount, setBlockedCount] = useState(0);
+  const [adBlockEnabled, setAdBlockEnabledState] = useState(true);
+  const [trackerBlockEnabled, setTrackerBlockEnabledState] = useState(true);
+  const [cosmeticFiltersEnabled, setCosmeticFiltersEnabledState] = useState(true);
+  const [malwareBlockEnabled, setMalwareBlockEnabledState] = useState(false);
+  const [safeBrowsingApiKey, setSafeBrowsingApiKeyState] = useState('');
+  const [stats, setStats] = useState({ ads: 0, trackers: 0, malware: 0 });
+  const [whitelist, setWhitelist] = useState<string[]>([]);
+  const [blacklist, setBlacklist] = useState<string[]>([]);
 
-  const reloadCount = useCallback(async () => {
-    const count = await window.electron.adblock.getBlockedCount();
-    setBlockedCount(count || 0);
+  const reloadStats = useCallback(async () => {
+    const s = await window.electron.adblock.getBlockedStats();
+    setStats(s || { ads: 0, trackers: 0, malware: 0 });
   }, []);
 
   useEffect(() => {
     (async () => {
-      const current = await window.electron.settings.getAdBlockEnabled();
-      setEnabledState(Boolean(current));
+      setAdBlockEnabledState(Boolean(await window.electron.settings.getAdBlockEnabled()));
+      setTrackerBlockEnabledState(Boolean(await window.electron.settings.getTrackerBlockEnabled()));
+      setCosmeticFiltersEnabledState(Boolean(await window.electron.settings.getCosmeticFiltersEnabled()));
+      setMalwareBlockEnabledState(Boolean(await window.electron.settings.getMalwareBlockEnabled()));
+      setSafeBrowsingApiKeyState((await window.electron.settings.getSafeBrowsingApiKey()) || '');
+      setWhitelist((await window.electron.adblock.getWhitelist()) || []);
+      setBlacklist((await window.electron.adblock.getBlacklist()) || []);
     })();
-    reloadCount();
+    reloadStats();
 
-    // Zähler alle paar Sekunden auffrischen, solange die Settings-Seite offen ist
-    const interval = setInterval(reloadCount, 3000);
+    const interval = setInterval(reloadStats, 3000);
     return () => clearInterval(interval);
-  }, [reloadCount]);
+  }, [reloadStats]);
 
-  const setEnabled = useCallback(async (value: boolean) => {
-    setEnabledState(value);
+  const setAdBlockEnabled = useCallback(async (value: boolean) => {
+    setAdBlockEnabledState(value);
     await window.electron.settings.setAdBlockEnabled(value);
   }, []);
 
-  return { enabled, setEnabled, blockedCount };
+  const setTrackerBlockEnabled = useCallback(async (value: boolean) => {
+    setTrackerBlockEnabledState(value);
+    await window.electron.settings.setTrackerBlockEnabled(value);
+  }, []);
+
+  const setCosmeticFiltersEnabled = useCallback(async (value: boolean) => {
+    setCosmeticFiltersEnabledState(value);
+    await window.electron.settings.setCosmeticFiltersEnabled(value);
+  }, []);
+
+  const setMalwareBlockEnabled = useCallback(async (value: boolean) => {
+    setMalwareBlockEnabledState(value);
+    await window.electron.settings.setMalwareBlockEnabled(value);
+  }, []);
+
+  const setSafeBrowsingApiKey = useCallback(async (key: string) => {
+    setSafeBrowsingApiKeyState(key);
+    await window.electron.settings.setSafeBrowsingApiKey(key);
+  }, []);
+
+  const addWhitelistEntry = useCallback(async (domain: string) => {
+    const next = await window.electron.adblock.addToWhitelist(domain);
+    setWhitelist(next);
+  }, []);
+
+  const removeWhitelistEntry = useCallback(async (domain: string) => {
+    const next = await window.electron.adblock.removeFromWhitelist(domain);
+    setWhitelist(next);
+  }, []);
+
+  const addBlacklistEntry = useCallback(async (domain: string) => {
+    const next = await window.electron.adblock.addToBlacklist(domain);
+    setBlacklist(next);
+  }, []);
+
+  const removeBlacklistEntry = useCallback(async (domain: string) => {
+    const next = await window.electron.adblock.removeFromBlacklist(domain);
+    setBlacklist(next);
+  }, []);
+
+  return {
+    adBlockEnabled,
+    setAdBlockEnabled,
+    trackerBlockEnabled,
+    setTrackerBlockEnabled,
+    cosmeticFiltersEnabled,
+    setCosmeticFiltersEnabled,
+    malwareBlockEnabled,
+    setMalwareBlockEnabled,
+    safeBrowsingApiKey,
+    setSafeBrowsingApiKey,
+    stats,
+    whitelist,
+    addWhitelistEntry,
+    removeWhitelistEntry,
+    blacklist,
+    addBlacklistEntry,
+    removeBlacklistEntry,
+  };
 }

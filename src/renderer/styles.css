@@ -1369,3 +1369,43 @@ webview {
   font-size: 13px;
   color: var(--text-secondary);
 }
+
+.domain-list-editor {
+  margin-top: 24px;
+  max-width: 500px;
+}
+
+.domain-list-input-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.domain-list-input-row input {
+  flex: 1;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 13px;
+}
+
+.domain-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.domain-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 10px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  font-size: 13px;
+}

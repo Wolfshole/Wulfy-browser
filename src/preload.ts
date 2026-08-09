@@ -92,6 +92,15 @@ contextBridge.exposeInMainWorld('electron', {
     getRestoreTabs: () => ipcRenderer.invoke('settings:getRestoreTabs'),
     getAdBlockEnabled: () => ipcRenderer.invoke('settings:getAdBlockEnabled'),
     setAdBlockEnabled: (enabled: boolean) => ipcRenderer.invoke('settings:setAdBlockEnabled', enabled),
+    getTrackerBlockEnabled: () => ipcRenderer.invoke('settings:getTrackerBlockEnabled'),
+    setTrackerBlockEnabled: (enabled: boolean) => ipcRenderer.invoke('settings:setTrackerBlockEnabled', enabled),
+    getCosmeticFiltersEnabled: () => ipcRenderer.invoke('settings:getCosmeticFiltersEnabled'),
+    setCosmeticFiltersEnabled: (enabled: boolean) =>
+      ipcRenderer.invoke('settings:setCosmeticFiltersEnabled', enabled),
+    getMalwareBlockEnabled: () => ipcRenderer.invoke('settings:getMalwareBlockEnabled'),
+    setMalwareBlockEnabled: (enabled: boolean) => ipcRenderer.invoke('settings:setMalwareBlockEnabled', enabled),
+    getSafeBrowsingApiKey: () => ipcRenderer.invoke('settings:getSafeBrowsingApiKey'),
+    setSafeBrowsingApiKey: (key: string) => ipcRenderer.invoke('settings:setSafeBrowsingApiKey', key),
     setRestoreTabs: (enabled: boolean) => ipcRenderer.invoke('settings:setRestoreTabs', enabled),
     getSavedTabs: () => ipcRenderer.invoke('settings:getSavedTabs'),
     setSavedTabs: (tabs: any) => ipcRenderer.invoke('settings:setSavedTabs', tabs),
@@ -116,7 +125,13 @@ contextBridge.exposeInMainWorld('electron', {
   },
 
   adblock: {
-    getBlockedCount: () => ipcRenderer.invoke('adblock:getBlockedCount'),
+    getBlockedStats: () => ipcRenderer.invoke('adblock:getBlockedStats'),
+    getWhitelist: () => ipcRenderer.invoke('adblock:getWhitelist'),
+    addToWhitelist: (domain: string) => ipcRenderer.invoke('adblock:addToWhitelist', domain),
+    removeFromWhitelist: (domain: string) => ipcRenderer.invoke('adblock:removeFromWhitelist', domain),
+    getBlacklist: () => ipcRenderer.invoke('adblock:getBlacklist'),
+    addToBlacklist: (domain: string) => ipcRenderer.invoke('adblock:addToBlacklist', domain),
+    removeFromBlacklist: (domain: string) => ipcRenderer.invoke('adblock:removeFromBlacklist', domain),
   },
 });
 

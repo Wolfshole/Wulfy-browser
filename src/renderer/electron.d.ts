@@ -105,6 +105,14 @@ export interface ElectronAPI {
     getRestoreTabs: () => Promise<boolean>;
     getAdBlockEnabled: () => Promise<boolean>;
     setAdBlockEnabled: (enabled: boolean) => Promise<boolean>;
+    getTrackerBlockEnabled: () => Promise<boolean>;
+    setTrackerBlockEnabled: (enabled: boolean) => Promise<boolean>;
+    getCosmeticFiltersEnabled: () => Promise<boolean>;
+    setCosmeticFiltersEnabled: (enabled: boolean) => Promise<boolean>;
+    getMalwareBlockEnabled: () => Promise<boolean>;
+    setMalwareBlockEnabled: (enabled: boolean) => Promise<boolean>;
+    getSafeBrowsingApiKey: () => Promise<string>;
+    setSafeBrowsingApiKey: (key: string) => Promise<boolean>;
     setRestoreTabs: (enabled: boolean) => Promise<void>;
     getSavedTabs: () => Promise<SavedTab[]>;
     setSavedTabs: (tabs: SavedTab[]) => Promise<void>;
@@ -129,7 +137,13 @@ export interface ElectronAPI {
     addKnowledge: (entry: string) => Promise<void>;
   };
   adblock: {
-    getBlockedCount: () => Promise<number>;
+    getBlockedStats: () => Promise<{ ads: number; trackers: number; malware: number }>;
+    getWhitelist: () => Promise<string[]>;
+    addToWhitelist: (domain: string) => Promise<string[]>;
+    removeFromWhitelist: (domain: string) => Promise<string[]>;
+    getBlacklist: () => Promise<string[]>;
+    addToBlacklist: (domain: string) => Promise<string[]>;
+    removeFromBlacklist: (domain: string) => Promise<string[]>;
   };
 }
 

@@ -105,6 +105,14 @@ class SettingsManager {
         backgroundImage: '',
         backgroundPresetId: '',
         adBlockEnabled: true,
+        trackerBlockEnabled: true,
+        cosmeticFiltersEnabled: true,
+        malwareBlockEnabled: false,
+        safeBrowsingApiKey: '',
+        adBlockWhitelist: [] as string[],
+        adBlockBlacklist: [] as string[],
+        whitelist: [],
+        blacklist: [],
       },
     });
   }
@@ -316,6 +324,58 @@ class SettingsManager {
    */
   setAdBlockEnabled(enabled: boolean): void {
     this.store.set('adBlockEnabled', enabled);
+  }
+
+  getTrackerBlockEnabled(): boolean {
+    return this.store.get('trackerBlockEnabled', true) as boolean;
+  }
+
+  setTrackerBlockEnabled(enabled: boolean): void {
+    this.store.set('trackerBlockEnabled', enabled);
+  }
+
+  getCosmeticFiltersEnabled(): boolean {
+    return this.store.get('cosmeticFiltersEnabled', true) as boolean;
+  }
+
+  setCosmeticFiltersEnabled(enabled: boolean): void {
+    this.store.set('cosmeticFiltersEnabled', enabled);
+  }
+
+  getMalwareBlockEnabled(): boolean {
+    return this.store.get('malwareBlockEnabled', false) as boolean;
+  }
+
+  setMalwareBlockEnabled(enabled: boolean): void {
+    this.store.set('malwareBlockEnabled', enabled);
+  }
+
+  /**
+   * Google Safe Browsing API-Key (leer = Malware/Phishing-Prüfung inaktiv,
+   * auch wenn der Schalter an ist - ohne Key wird nichts geprüft)
+   */
+  getSafeBrowsingApiKey(): string {
+    return this.store.get('safeBrowsingApiKey', '') as string;
+  }
+
+  setSafeBrowsingApiKey(key: string): void {
+    this.store.set('safeBrowsingApiKey', key);
+  }
+
+  getAdBlockWhitelist(): string[] {
+    return this.store.get('adBlockWhitelist', []) as string[];
+  }
+
+  setAdBlockWhitelist(list: string[]): void {
+    this.store.set('adBlockWhitelist', list);
+  }
+
+  getAdBlockBlacklist(): string[] {
+    return this.store.get('adBlockBlacklist', []) as string[];
+  }
+
+  setAdBlockBlacklist(list: string[]): void {
+    this.store.set('adBlockBlacklist', list);
   }
 }
 
