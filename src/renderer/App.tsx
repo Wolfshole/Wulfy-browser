@@ -218,7 +218,7 @@ export default function App() {
       <header className="header">
         <Toolbar
           ref={downloadsWrapperRef}
-          currentUrl={activeTab?.url ?? ''}
+          currentUrl={activeTab?.isNewTabPage ? '' : activeTab?.url ?? ''}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
           onBack={goBack}
