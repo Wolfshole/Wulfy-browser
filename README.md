@@ -1,4 +1,4 @@
-# Wulfy-brwoser
+# Wulfy-browser
 
 Dies ist der Webbrowser von mir ihr könnt ihr euch nun Runterladen unter den Releases.
 
