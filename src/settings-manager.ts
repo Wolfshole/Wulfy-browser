@@ -21,12 +21,6 @@ export interface ThemePreset {
 export interface WallpaperPreset {
   id: string;
   name: string;
-  css: string; // gültiger CSS background-image Wert (Gradient)
-}
-
-export interface WallpaperPreset {
-  id: string;
-  name: string;
   css: string; // fertiger CSS-Wert für background-image, z.B. ein Gradient
 }
 
@@ -111,8 +105,7 @@ class SettingsManager {
         safeBrowsingApiKey: '',
         adBlockWhitelist: [] as string[],
         adBlockBlacklist: [] as string[],
-        whitelist: [],
-        blacklist: [],
+        startPageMode: 'google',
       },
     });
   }
@@ -376,6 +369,18 @@ class SettingsManager {
 
   setAdBlockBlacklist(list: string[]): void {
     this.store.set('adBlockBlacklist', list);
+  }
+
+  /**
+   * 'google' = wie bisher, 'launcher' = neue Wulfy-Start-Seite mit
+   * Kacheln und Newsfeed
+   */
+  getStartPageMode(): 'google' | 'launcher' {
+    return this.store.get('startPageMode', 'google') as 'google' | 'launcher';
+  }
+
+  setStartPageMode(mode: 'google' | 'launcher'): void {
+    this.store.set('startPageMode', mode);
   }
 }
 

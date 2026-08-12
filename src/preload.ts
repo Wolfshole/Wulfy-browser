@@ -90,6 +90,8 @@ contextBridge.exposeInMainWorld('electron', {
     getAIConfig: () => ipcRenderer.invoke('settings:getAIConfig'),
     setAIConfig: (config: any) => ipcRenderer.invoke('settings:setAIConfig', config),
     getRestoreTabs: () => ipcRenderer.invoke('settings:getRestoreTabs'),
+    getStartPageMode: () => ipcRenderer.invoke('settings:getStartPageMode'),
+    setStartPageMode: (mode: string) => ipcRenderer.invoke('settings:setStartPageMode', mode),
     getAdBlockEnabled: () => ipcRenderer.invoke('settings:getAdBlockEnabled'),
     setAdBlockEnabled: (enabled: boolean) => ipcRenderer.invoke('settings:setAdBlockEnabled', enabled),
     getTrackerBlockEnabled: () => ipcRenderer.invoke('settings:getTrackerBlockEnabled'),
@@ -122,6 +124,10 @@ contextBridge.exposeInMainWorld('electron', {
     getHistory: () => ipcRenderer.invoke('ai:getHistory'),
     clearHistory: () => ipcRenderer.invoke('ai:clearHistory'),
     addKnowledge: (entry: string) => ipcRenderer.invoke('ai:addKnowledge', entry),
+  },
+
+  news: {
+    getFeed: () => ipcRenderer.invoke('news:getFeed'),
   },
 
   adblock: {

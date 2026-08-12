@@ -1,103 +1,100 @@
-import { useCallback, useEffect, useRef } from "react";
-import {
-  isInternalUrl,
-  SETTINGS_URL,
-  AI_CHAT_URL,
-  type Tab,
-} from "../hooks/useBrowserTabs";
-import SettingsPage from "./SettingsPage";
-import AIChatPage from "./AIChatPage";
+import { useEffect, useState } from 'react';
+import type { NewsArticle } from '../electron.d';
 
-interface Props {
-  tabs: Tab[];
-  activeTabId: string;
-  registerWebviewRef: (tabId: string, el: any) => void;
-  bindWebviewEvents: (tabId: string, webview: any) => () => void;
+interface Tile {
+  title: string;
+  url: string;
 }
 
-function WebviewSlot({
-  tab,
-  isActive,
-  registerWebviewRef,
-  bindWebviewEvents,
-}: {
-  tab: Tab;
-  isActive: boolean;
-  registerWebviewRef: (tabId: string, el: any) => void;
-  bindWebviewEvents: (tabId: string, webview: any) => () => void;
-}) {
-  const mounted = useRef(false);
-  const cleanupRef = useRef<() => void>();
-
-  // WICHTIG: mit useCallback stabil halten. Ohne das erzeugt React bei jedem
-  // Render eine neue Ref-Funktion, ruft sie erneut auf (erst null, dann Element),
-  // wodurch el.src immer wieder neu gesetzt wird -> die Webview lädt endlos neu.
-  const setRef = useCallback(
-    (el: any) => {
-      registerWebviewRef(tab.id, el);
-      if (el && !mounted.current) {
-        mounted.current = true;
-        el.setAttribute("allowpopups", "true");
-        el.src = tab.url;
-        cleanupRef.current = bindWebviewEvents(tab.id, el);
-      }
-      if (!el) {
-        cleanupRef.current?.();
-        mounted.current = false;
-      }
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tab.id, registerWebviewRef, bindWebviewEvents],
-  );
-
-  useEffect(() => () => cleanupRef.current?.(), []);
-
-  return (
-    // @ts-ignore - webview ist ein Electron-spezifisches Custom Element
-    <webview
-      ref={setRef}
-      className="webview"
-      style={{ display: isActive ? "flex" : "none" }}
-    />
-  );
+function navigateTo(url: string) {
+  window.dispatchEvent(new CustomEvent('wulfy-navigate', { detail: { url } }));
 }
 
-export default function BrowserView({
-  tabs,
-  activeTabId,
-  registerWebviewRef,
-  bindWebviewEvents,
-}: Props) {
-  return (
-    <div className="browser-container">
-      {tabs.map((tab) => {
-        const isActive = tab.id === activeTabId;
+function openInNewTab(url: string, title: string) {
+  window.dispatchEvent(new CustomEvent('wulfy-open-new-tab', { detail: { url, title } }));
+}
 
-        if (isInternalUrl(tab.url)) {
-          // Interne Seiten (aktuell nur Settings) sind React-Komponenten,
-          // keine Webviews - kein registerWebviewRef/bindWebviewEvents nötig.
-          return (
-            <div
-              key={tab.id}
-              className="internal-page"
-              style={{ display: isActive ? "flex" : "none" }}
-            >
-              {tab.url === SETTINGS_URL && <SettingsPage />}
-              {tab.url === AI_CHAT_URL && <AIChatPage />}
+function hostnameOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '');
+  } catch {
+    return url;
+  }
+}
+
+export default function StartPage() {
+  const [tiles, setTiles] = useState<Tile[]>([]);
+  const [news, setNews] = useState<NewsArticle[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      const bookmarks = (await window.electron.bookmarks.get()) || [];
+      const tiles: Tile[] = bookmarks.map((b: any) => ({ title: b.title, url: b.url }));
+      setTiles(tiles);
+    })();
+
+    (async () => {
+      setNewsLoading(true);
+      const feed = (await window.electron.news.getFeed()) || [];
+      setNews(feed);
+      setNewsLoading(false);
+    })();
+  }, []);
+
+  return (
+    <div className="start-page">
+      <div className="start-page-inner">
+        <h1 className="start-page-greeting">
+          <img src="/title-icon.png" alt="Wulfy" className="start-page-logo" />
+          Wulfy Start
+        </h1>
+
+        <section className="start-page-section">
+          <h2>Favoriten</h2>
+          {tiles.length === 0 ? (
+            <p className="empty-message">
+              Noch keine Favoriten vorhanden - speichere eine Seite mit dem ☆-Button, dann taucht sie
+              hier auf.
+            </p>
+          ) : (
+            <div className="speed-dial-grid">
+              {tiles.map((tile) => (
+                <button
+                  key={tile.url}
+                  className="speed-dial-tile"
+                  onClick={() => navigateTo(tile.url)}
+                  title={tile.url}
+                >
+                  <span className="speed-dial-icon">{hostnameOf(tile.url).charAt(0).toUpperCase()}</span>
+                  <span className="speed-dial-title">{tile.title || hostnameOf(tile.url)}</span>
+                </button>
+              ))}
             </div>
-          );
-        }
+          )}
+        </section>
 
-        return (
-          <WebviewSlot
-            key={tab.id}
-            tab={tab}
-            isActive={isActive}
-            registerWebviewRef={registerWebviewRef}
-            bindWebviewEvents={bindWebviewEvents}
-          />
-        );
-      })}
+        <section className="start-page-section">
+          <h2>Nachrichten</h2>
+          {newsLoading ? (
+            <p className="empty-message">Lade Nachrichten...</p>
+          ) : (
+            <div className="news-list">
+              {news.map((article, i) => (
+                <button
+                  key={i}
+                  className="news-item"
+                  disabled={!article.link}
+                  onClick={() => article.link && openInNewTab(article.link, article.title)}
+                >
+                  <span className="news-item-title">{article.title}</span>
+                  {article.source && <span className="news-item-source">{article.source}</span>}
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

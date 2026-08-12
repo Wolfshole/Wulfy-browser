@@ -14,6 +14,7 @@ let tabCounter = 0;
 
 export const SETTINGS_URL = 'wulfy://settings';
 export const AI_CHAT_URL = 'wulfy://ai-chat';
+export const START_PAGE_URL = 'wulfy://start';
 
 export function isInternalUrl(url: string): boolean {
   return url.startsWith('wulfy://');
@@ -33,6 +34,19 @@ export function useBrowserTabs() {
     url: 'https://www.google.com/search?q={query}',
   });
   const restoreEnabledRef = useRef(false);
+  const startPageModeRef = useRef<'google' | 'launcher'>('google');
+
+  // Hält startPageModeRef synchron, wenn der Modus live in den Settings
+  // geändert wird (useSettings.ts feuert dieses Event beim Speichern).
+  useEffect(() => {
+    const handler = (e: any) => {
+      if (e.detail === 'google' || e.detail === 'launcher') {
+        startPageModeRef.current = e.detail;
+      }
+    };
+    window.addEventListener('wulfy-startpage-mode-changed', handler);
+    return () => window.removeEventListener('wulfy-startpage-mode-changed', handler);
+  }, []);
   const tabsRef = useRef<Tab[]>([]);
   const activeTabIdRef = useRef('');
   // Merkt sich, für welche Tabs die initiale (programmatische) Navigation
@@ -62,6 +76,15 @@ export function useBrowserTabs() {
     window.electron.settings.setSavedTabs(currentTabs.map(({ url, title }) => ({ url, title })));
   }, []);
 
+  // Liefert URL+Titel für einen "leeren" Standard-Tab, abhängig davon, ob in
+  // den Settings Google oder die Wulfy-Start-Seite als Startseite gewählt ist.
+  const getDefaultTab = useCallback((): { url: string; title: string } => {
+    if (startPageModeRef.current === 'launcher') {
+      return { url: START_PAGE_URL, title: 'Start' };
+    }
+    return { url: 'https://www.google.com', title: 'Google' };
+  }, []);
+
   const registerWebviewRef = useCallback((tabId: string, el: any) => {
     if (el) webviewRefs.current.set(tabId, el);
     else webviewRefs.current.delete(tabId);
@@ -84,19 +107,23 @@ export function useBrowserTabs() {
   }, []);
 
   const createNewTab = useCallback(
-    (url = 'https://www.google.com', title = 'Neues Tab'): string => {
+    (urlParam?: string, titleParam?: string): string => {
+      const usingDefault = urlParam === undefined;
+      const defaults = usingDefault ? getDefaultTab() : null;
+      const url = urlParam ?? defaults!.url;
+      const title = titleParam ?? defaults?.title ?? 'Neues Tab';
+
       const id = `tab-${++tabCounter}`;
       const finalUrl = ensureProtocol(url);
-      const isNewTabPage = url === 'https://www.google.com';
       setTabs((prev) => {
-        const next = [...prev, { id, title, url: finalUrl, isNewTabPage }];
+        const next = [...prev, { id, title, url: finalUrl, isNewTabPage: usingDefault }];
         saveCurrentTabs(next);
         return next;
       });
       setActiveTabId(id);
       return id;
     },
-    [ensureProtocol, saveCurrentTabs]
+    [ensureProtocol, saveCurrentTabs, getDefaultTab]
   );
 
   const closeTab = useCallback(
@@ -111,12 +138,13 @@ export function useBrowserTabs() {
           if (next.length > 0) {
             setActiveTabId(next[0].id);
           } else {
-            // Letzter Tab geschlossen -> neuen leeren Tab öffnen
+            // Letzter Tab geschlossen -> neuen Standard-Tab öffnen
             const id = `tab-${++tabCounter}`;
+            const defaults = getDefaultTab();
             const fresh = {
               id,
-              title: 'Neues Tab',
-              url: ensureProtocol('https://www.google.com'),
+              title: defaults.title,
+              url: ensureProtocol(defaults.url),
               isNewTabPage: true,
             };
             setActiveTabId(id);
@@ -126,7 +154,7 @@ export function useBrowserTabs() {
         return next;
       });
     },
-    [ensureProtocol, saveCurrentTabs]
+    [ensureProtocol, saveCurrentTabs, getDefaultTab]
   );
 
   const switchToNextTab = useCallback(() => {
@@ -173,8 +201,8 @@ export function useBrowserTabs() {
   }, []);
 
   const goHome = useCallback(() => {
-    navigateToUrl('https://www.google.com');
-  }, [navigateToUrl]);
+    navigateToUrl(getDefaultTab().url);
+  }, [navigateToUrl, getDefaultTab]);
 
   const openSettingsTab = useCallback(() => {
     const existing = tabsRef.current.find((t) => t.url === SETTINGS_URL);
@@ -265,6 +293,13 @@ export function useBrowserTabs() {
 
     restoreEnabledRef.current = Boolean(await window.electron.settings.getRestoreTabs());
 
+    try {
+      const mode = await window.electron.settings.getStartPageMode();
+      if (mode === 'launcher' || mode === 'google') startPageModeRef.current = mode;
+    } catch {
+      // Fallback bleibt 'google'
+    }
+
     let restored = false;
     if (restoreEnabledRef.current) {
       const saved = await window.electron.settings.getSavedTabs();
@@ -280,7 +315,7 @@ export function useBrowserTabs() {
     }
 
     if (!restored) {
-      createNewTab('https://www.google.com', 'Google');
+      createNewTab();
     }
   }, [createNewTab]);
 

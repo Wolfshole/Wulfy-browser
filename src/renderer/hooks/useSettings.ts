@@ -19,6 +19,7 @@ export function useSettings() {
   const [searchEngines, setSearchEngines] = useState<SearchEngine[]>([]);
   const [selectedEngineId, setSelectedEngineId] = useState('google');
   const [restoreTabs, setRestoreTabsState] = useState(false);
+  const [startPageMode, setStartPageModeState] = useState<'google' | 'launcher'>('google');
   const [accentColor, setAccentColorState] = useState('#0078d4');
   const [themePresets, setThemePresets] = useState<ThemePreset[]>([]);
 
@@ -40,6 +41,9 @@ export function useSettings() {
 
       const restore = await window.electron.settings.getRestoreTabs();
       setRestoreTabsState(Boolean(restore));
+
+      const mode = await window.electron.settings.getStartPageMode();
+      if (mode) setStartPageModeState(mode);
 
       const color = await window.electron.settings.getAccentColor();
       if (color) {
@@ -84,6 +88,14 @@ export function useSettings() {
   const setRestoreTabs = useCallback(async (enabled: boolean) => {
     setRestoreTabsState(enabled);
     await window.electron.settings.setRestoreTabs(enabled);
+  }, []);
+
+  const setStartPageMode = useCallback(async (mode: 'google' | 'launcher') => {
+    setStartPageModeState(mode);
+    await window.electron.settings.setStartPageMode(mode);
+    // useBrowserTabs.ts liest den Modus nur einmal beim Start - per Event
+    // live nachziehen, damit neue Tabs sofort den richtigen Modus nutzen.
+    window.dispatchEvent(new CustomEvent('wulfy-startpage-mode-changed', { detail: mode }));
   }, []);
 
   const setAccentColor = useCallback(async (color: string) => {
@@ -133,6 +145,8 @@ export function useSettings() {
     setSearchEngine,
     restoreTabs,
     setRestoreTabs,
+    startPageMode,
+    setStartPageMode,
     accentColor,
     setAccentColor,
     themePresets,

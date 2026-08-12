@@ -1480,3 +1480,166 @@ webview {
 .toggle-switch input:disabled + .toggle-switch-track {
   cursor: not-allowed;
 }
+
+/* ============================================
+   WULFY START (Speed Dial + Newsfeed)
+   ============================================ */
+
+.start-page {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.start-page-inner {
+  width: 100%;
+  max-width: 860px;
+  padding: 48px 32px;
+}
+
+.start-page-greeting {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 28px;
+  margin-bottom: 32px;
+  color: var(--text-primary);
+}
+
+.start-page-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+}
+
+.start-page-section {
+  margin-bottom: 40px;
+}
+
+.start-page-section h2 {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 16px;
+  font-weight: 600;
+}
+
+.speed-dial-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 16px;
+}
+
+.speed-dial-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 8px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.speed-dial-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
+}
+
+.speed-dial-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--accent-color);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.speed-dial-title {
+  font-size: 12px;
+  color: var(--text-primary);
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.news-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.news-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: color-mix(in srgb, var(--bg-primary) 88%, transparent);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+}
+
+.news-item:disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.news-item:not(:disabled):hover {
+  border-color: var(--accent-color);
+}
+
+.news-item-title {
+  font-size: 13px;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.news-item-source {
+  font-size: 11px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.start-page-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 500px;
+}
+
+.start-page-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.start-page-mode-option input {
+  margin-top: 3px;
+}
+
+.start-page-mode-option strong {
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.start-page-mode-option .settings-page-hint {
+  margin: 2px 0 0;
+}

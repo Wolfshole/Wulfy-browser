@@ -24,6 +24,8 @@ export default function SettingsPage() {
     setSearchEngine,
     restoreTabs,
     setRestoreTabs,
+    startPageMode,
+    setStartPageMode,
     accentColor,
     setAccentColor,
     themePresets,
@@ -213,6 +215,39 @@ export default function SettingsPage() {
               onChange={setRestoreTabs}
               label="Beim Start zuletzt geöffnete Tabs wiederherstellen"
             />
+
+            <h3 style={{ marginTop: 28 }}>Neuer Tab</h3>
+            <p className="settings-page-hint">
+              Was ein neuer Tab standardmäßig öffnet.
+            </p>
+            <div className="start-page-mode-options">
+              <label className="start-page-mode-option">
+                <input
+                  type="radio"
+                  name="start-page-mode"
+                  checked={startPageMode === 'google'}
+                  onChange={() => setStartPageMode('google')}
+                />
+                <div>
+                  <strong>Google</strong>
+                  <p className="settings-page-hint">Wie bisher - lädt direkt Google.</p>
+                </div>
+              </label>
+              <label className="start-page-mode-option">
+                <input
+                  type="radio"
+                  name="start-page-mode"
+                  checked={startPageMode === 'launcher'}
+                  onChange={() => setStartPageMode('launcher')}
+                />
+                <div>
+                  <strong>Wulfy Start</strong>
+                  <p className="settings-page-hint">
+                    Kacheln deiner Favoriten/meistbesuchten Seiten plus ein Nachrichten-Feed.
+                  </p>
+                </div>
+              </label>
+            </div>
           </section>
         )}
 

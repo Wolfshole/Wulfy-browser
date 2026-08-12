@@ -7,6 +7,7 @@ import downloadsManager from "./downloads-manager";
 import { registerDownloadHandler } from "./download-handler";
 import settingsManager from "./settings-manager";
 import aiManager from "./ai-manager";
+import { getNewsFeed } from "./news";
 import {
   registerAdBlocker,
   setAdBlockEnabled,
@@ -568,5 +569,18 @@ ipcMain.handle("ai:clearHistory", async () => {
 
 ipcMain.handle("ai:addKnowledge", async (_evt, entry: string) => {
   aiManager.addKnowledge(entry);
+  return true;
+});
+
+ipcMain.handle("news:getFeed", async () => {
+  return getNewsFeed();
+});
+
+ipcMain.handle("settings:getStartPageMode", async () => {
+  return settingsManager.getStartPageMode();
+});
+
+ipcMain.handle("settings:setStartPageMode", async (_evt, mode: "google" | "launcher") => {
+  settingsManager.setStartPageMode(mode);
   return true;
 });
