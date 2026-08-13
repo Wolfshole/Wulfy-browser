@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { NewsArticle } from '../electron.d';
+import type { NewsArticle, WulfyNewsItem } from '../electron.d';
 
 interface Tile {
   title: string;
@@ -26,29 +26,14 @@ export default function StartPage() {
   const [tiles, setTiles] = useState<Tile[]>([]);
   const [news, setNews] = useState<NewsArticle[]>([]);
   const [newsLoading, setNewsLoading] = useState(true);
+  const [wulfyUpdates, setWulfyUpdates] = useState<WulfyNewsItem[]>([]);
+  const [wulfyUpdatesLoading, setWulfyUpdatesLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       const bookmarks = (await window.electron.bookmarks.get()) || [];
-      const topVisited = (await window.electron.history.getTopVisited(12)) || [];
-
-      const seen = new Set<string>();
-      const combined: Tile[] = [];
-
-      for (const b of bookmarks) {
-        if (!seen.has(b.url)) {
-          seen.add(b.url);
-          combined.push({ title: b.title, url: b.url });
-        }
-      }
-      for (const h of topVisited) {
-        if (!seen.has(h.url) && combined.length < 8) {
-          seen.add(h.url);
-          combined.push({ title: h.title, url: h.url });
-        }
-      }
-
-      setTiles(combined.slice(0, 8));
+      const tiles: Tile[] = bookmarks.map((b: any) => ({ title: b.title, url: b.url }));
+      setTiles(tiles);
     })();
 
     (async () => {
@@ -57,19 +42,29 @@ export default function StartPage() {
       setNews(feed);
       setNewsLoading(false);
     })();
+
+    (async () => {
+      setWulfyUpdatesLoading(true);
+      const updates = (await window.electron.news.getWulfyNews()) || [];
+      setWulfyUpdates(updates);
+      setWulfyUpdatesLoading(false);
+    })();
   }, []);
 
   return (
     <div className="start-page">
       <div className="start-page-inner">
-        <h1 className="start-page-greeting">🐺 Wulfy Start</h1>
+        <h1 className="start-page-greeting">
+          <img src="/title-icon.png" alt="Wulfy" className="start-page-logo" />
+          Wulfy Start
+        </h1>
 
         <section className="start-page-section">
-          <h2>Favoriten &amp; meistbesucht</h2>
+          <h2>Favoriten</h2>
           {tiles.length === 0 ? (
             <p className="empty-message">
-              Noch keine Favoriten oder Verlauf vorhanden - besuch ein paar Seiten oder speichere
-              Favoriten, dann tauchen sie hier auf.
+              Noch keine Favoriten vorhanden - speichere eine Seite mit dem ☆-Button, dann taucht sie
+              hier auf.
             </p>
           ) : (
             <div className="speed-dial-grid">
@@ -87,6 +82,32 @@ export default function StartPage() {
             </div>
           )}
         </section>
+
+        {wulfyUpdates.length > 0 && (
+          <section className="start-page-section">
+            <h2>Wulfy Browser Updates</h2>
+            <div className="news-list">
+              {wulfyUpdates.map((item, i) => (
+                <button
+                  key={i}
+                  className={`news-item wulfy-update-item wulfy-update-${item.type}`}
+                  onClick={() => openInNewTab(item.url, item.title)}
+                >
+                  <span className="news-item-title">{item.title}</span>
+                  <span className="news-item-source">
+                    {item.type === 'release' ? 'Release' : 'Commit'}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </section>
+        )}
+        {wulfyUpdatesLoading && wulfyUpdates.length === 0 && (
+          <section className="start-page-section">
+            <h2>Wulfy Browser Updates</h2>
+            <p className="empty-message">Lade...</p>
+          </section>
+        )}
 
         <section className="start-page-section">
           <h2>Nachrichten</h2>

@@ -1643,3 +1643,15 @@ webview {
 .start-page-mode-option .settings-page-hint {
   margin: 2px 0 0;
 }
+
+.wulfy-update-item {
+  border-left: 3px solid transparent;
+}
+
+.wulfy-update-release {
+  border-left-color: var(--accent-color);
+}
+
+.wulfy-update-commit {
+  border-left-color: var(--border-color);
+}
