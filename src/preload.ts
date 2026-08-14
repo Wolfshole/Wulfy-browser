@@ -128,6 +128,7 @@ contextBridge.exposeInMainWorld('electron', {
 
   news: {
     getFeed: () => ipcRenderer.invoke('news:getFeed'),
+    getWulfyNews: () => ipcRenderer.invoke('news:getWulfyNews'),
   },
 
   adblock: {
