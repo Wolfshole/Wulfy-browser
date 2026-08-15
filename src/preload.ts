@@ -131,6 +131,14 @@ contextBridge.exposeInMainWorld('electron', {
     getWulfyNews: () => ipcRenderer.invoke('news:getWulfyNews'),
   },
 
+  cookies: {
+    getAll: () => ipcRenderer.invoke('cookies:getAll'),
+    deleteOne: (domain: string, path: string, name: string, secure: boolean) =>
+      ipcRenderer.invoke('cookies:deleteOne', domain, path, name, secure),
+    deleteForDomain: (domain: string) => ipcRenderer.invoke('cookies:deleteForDomain', domain),
+    clearAll: () => ipcRenderer.invoke('cookies:clearAll'),
+  },
+
   adblock: {
     getBlockedStats: () => ipcRenderer.invoke('adblock:getBlockedStats'),
     getWhitelist: () => ipcRenderer.invoke('adblock:getWhitelist'),

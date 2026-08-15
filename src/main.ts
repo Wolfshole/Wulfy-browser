@@ -7,7 +7,14 @@ import downloadsManager from "./downloads-manager";
 import { registerDownloadHandler } from "./download-handler";
 import settingsManager from "./settings-manager";
 import aiManager from "./ai-manager";
+import {
+  getAllCookiesGrouped,
+  deleteCookie,
+  deleteCookiesForDomain,
+  clearAllCookies,
+} from "./cookie-manager";
 import { getNewsFeed } from "./news";
+import { getWulfyNews } from "./wulfy-news";
 import {
   registerAdBlocker,
   setAdBlockEnabled,
@@ -576,11 +583,37 @@ ipcMain.handle("news:getFeed", async () => {
   return getNewsFeed();
 });
 
+ipcMain.handle("news:getWulfyNews", async () => {
+  return getWulfyNews();
+});
+
 ipcMain.handle("settings:getStartPageMode", async () => {
   return settingsManager.getStartPageMode();
 });
 
 ipcMain.handle("settings:setStartPageMode", async (_evt, mode: "google" | "launcher") => {
   settingsManager.setStartPageMode(mode);
+  return true;
+});
+
+ipcMain.handle("cookies:getAll", async () => {
+  return getAllCookiesGrouped();
+});
+
+ipcMain.handle(
+  "cookies:deleteOne",
+  async (_evt, domain: string, path: string, name: string, secure: boolean) => {
+    await deleteCookie(domain, path, name, secure);
+    return true;
+  },
+);
+
+ipcMain.handle("cookies:deleteForDomain", async (_evt, domain: string) => {
+  await deleteCookiesForDomain(domain);
+  return true;
+});
+
+ipcMain.handle("cookies:clearAll", async () => {
+  await clearAllCookies();
   return true;
 });

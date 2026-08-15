@@ -103,6 +103,8 @@ export interface ElectronAPI {
     setAIConfig: (config: any) => Promise<boolean>;
     // Für Tab-Wiederherstellung — muss noch in settings-manager.ts ergänzt werden:
     getRestoreTabs: () => Promise<boolean>;
+    getStartPageMode: () => Promise<'google' | 'launcher'>;
+    setStartPageMode: (mode: 'google' | 'launcher') => Promise<boolean>;
     getAdBlockEnabled: () => Promise<boolean>;
     setAdBlockEnabled: (enabled: boolean) => Promise<boolean>;
     getTrackerBlockEnabled: () => Promise<boolean>;
@@ -136,6 +138,12 @@ export interface ElectronAPI {
     clearHistory: () => Promise<any>;
     addKnowledge: (entry: string) => Promise<void>;
   };
+  cookies: {
+    getAll: () => Promise<CookieGroup[]>;
+    deleteOne: (domain: string, path: string, name: string, secure: boolean) => Promise<boolean>;
+    deleteForDomain: (domain: string) => Promise<boolean>;
+    clearAll: () => Promise<boolean>;
+  };
   adblock: {
     getBlockedStats: () => Promise<{ ads: number; trackers: number; malware: number }>;
     getWhitelist: () => Promise<string[]>;
@@ -145,6 +153,39 @@ export interface ElectronAPI {
     addToBlacklist: (domain: string) => Promise<string[]>;
     removeFromBlacklist: (domain: string) => Promise<string[]>;
   };
+  news: {
+    getFeed: () => Promise<NewsArticle[]>;
+    getWulfyNews: () => Promise<WulfyNewsItem[]>;
+  };
+}
+
+export interface NewsArticle {
+  title: string;
+  link: string;
+  source: string;
+  pubDate: string;
+}
+
+export interface CookieInfo {
+  name: string;
+  value: string;
+  domain: string;
+  path: string;
+  secure: boolean;
+  httpOnly: boolean;
+  expirationDate?: number;
+}
+
+export interface CookieGroup {
+  domain: string;
+  cookies: CookieInfo[];
+}
+
+export interface WulfyNewsItem {
+  type: 'release' | 'commit';
+  title: string;
+  url: string;
+  date: string;
 }
 
 declare global {

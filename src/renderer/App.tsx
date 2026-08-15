@@ -213,6 +213,26 @@ export default function App() {
     return () => window.removeEventListener('open-ai-chat', handler);
   }, [openAIChatTab]);
 
+  // Von der Start-Seite (Speed-Dial-Kachel) ausgelöst: im aktuellen Tab navigieren
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const url = (e as CustomEvent<{ url: string }>).detail?.url;
+      if (url) navigateToUrl(url);
+    };
+    window.addEventListener('wulfy-navigate', handler);
+    return () => window.removeEventListener('wulfy-navigate', handler);
+  }, [navigateToUrl]);
+
+  // Von der Start-Seite (Newsfeed-Artikel) ausgelöst: in neuem Tab öffnen
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent<{ url: string; title: string }>).detail;
+      if (detail?.url) createNewTab(detail.url, detail.title);
+    };
+    window.addEventListener('wulfy-open-new-tab', handler);
+    return () => window.removeEventListener('wulfy-open-new-tab', handler);
+  }, [createNewTab]);
+
   return (
     <div className="app">
       <header className="header">
